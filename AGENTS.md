@@ -16,7 +16,9 @@ LLM-guided reasoning and maps findings to the OWASP Top 10:2025.
 - `src/config.ts`: centralized environment-based configuration.
 - `src/health.ts`: Ollama readiness and model checks.
 - `src/opencode.ts`: OpenCode SDK server/client setup with inline Ollama provider.
-- `src/index.ts`: CLI entry point (currently `doctor` and `ask`).
+- `src/index.ts`: CLI entry point (currently `doctor`, `ask`, `intake`, and `recon`).
+- `src/tools/`: guarded HTTP client, read-only crawler, and evidence tools.
+- `src/store/evidence-store.ts`: hashed, size-capped, redacted local evidence.
 - `docker-compose.yml`, `Dockerfile`: single container setup (Ollama + one app/dev service). The dev container (`.devcontainer/devcontainer.json`) reuses this same compose file and Dockerfile and pins `OLLAMA_MODEL=granite3.3:2b`.
 - `scripts/`: host bootstrap/doctor helpers plus `devcontainer-setup.sh` (deps + model pull inside the dev container).
 - `docs/`: architecture, methodology, agent loop, scope, threat model, tools, verification, troubleshooting.

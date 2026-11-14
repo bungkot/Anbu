@@ -4,7 +4,10 @@ Tools are the only way the agent loop can interact with a target. Every tool
 call is validated by the guardrail layer before execution. The planner sees a
 closed schema and cannot invent tools or bypass arguments.
 
-> Status: target tool schemas. Implementation is tracked in `ROADMAP.md`.
+> Status: `http_request`, `crawl`, `capture_evidence`, `compare_evidence`, and
+> `parse_response` are implemented in `src/tools/` and `src/store/` (M2) and are
+> exercised by `npm run recon` and the unit suite. The closed agent-facing
+> schemas and the remaining tools arrive with M3/M4; see `ROADMAP.md`.
 
 ## Common result shape
 

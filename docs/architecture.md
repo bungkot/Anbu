@@ -78,6 +78,7 @@ src/
 ├── health.ts                # Ollama readiness + model checks
 ├── opencode.ts              # OpenCode SDK server/client + Ollama provider
 ├── intake.ts                # scope loading and intake validation
+├── recon.ts                 # read-only crawl + attack-surface aggregation
 ├── audit/
 │   └── log.ts               # append-only hash-chained audit log
 ├── agent/

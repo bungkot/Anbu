@@ -82,21 +82,21 @@ export interface CrawlResult {
   maxUrls: number;
 }
 
-interface RawForm {
+export interface ParsedForm {
   action: string;
   method: FormMethod;
   parameters: string[];
 }
 
-interface RawAsset {
+export interface ParsedAsset {
   url: string;
   type: AssetType;
 }
 
-interface PageExtraction {
+export interface ParsedPage {
   links: string[];
-  forms: RawForm[];
-  assets: RawAsset[];
+  forms: ParsedForm[];
+  assets: ParsedAsset[];
   technologies: TechnologyMarker[];
   /** Resolved `<base href>` for this page, if present. */
   baseUrl?: string;
@@ -128,15 +128,15 @@ function detectTechnologyFromUrl(rawUrl: string, markers: TechnologyMarker[]): v
   }
 }
 
-function extractPage(
+export function parseHtmlPage(
   pageUrl: string,
   html: string,
   headers: Record<string, string>,
-): PageExtraction {
+): ParsedPage {
   const document = parse(html);
   const links: string[] = [];
-  const forms: RawForm[] = [];
-  const assets: RawAsset[] = [];
+  const forms: ParsedForm[] = [];
+  const assets: ParsedAsset[] = [];
   const technologies: TechnologyMarker[] = [];
   let baseUrl: string | undefined;
 
@@ -230,7 +230,7 @@ function extractPage(
   return { links, forms, assets, technologies, baseUrl };
 }
 
-function normalizeUrl(raw: string, base?: string): string | undefined {
+export function normalizeUrl(raw: string, base?: string): string | undefined {
   const trimmed = raw.trim();
   if (trimmed.length === 0 || trimmed.length > MAX_URL_LENGTH) return undefined;
   if (/^(?:javascript|mailto|tel|data|file|ftp):/i.test(trimmed)) return undefined;
@@ -369,7 +369,7 @@ export class Crawler {
       const contentType = response.headers["content-type"] ?? "";
       if (!isHtml(contentType, response.bodyText)) continue;
 
-      const extraction = extractPage(item.url, response.bodyText, response.headers);
+      const extraction = parseHtmlPage(item.url, response.bodyText, response.headers);
       technologies.push(...extraction.technologies);
       const resolveBase = extraction.baseUrl ?? item.url;
 

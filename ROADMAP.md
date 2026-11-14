@@ -55,7 +55,7 @@ Exit criteria:
 Status: complete. 41 unit tests pass; `npm run typecheck` and `npm run build`
 are clean.
 
-## M2 — Tool layer and evidence (in progress)
+## M2 — Tool layer and evidence
 
 Goal: a guarded HTTP client and a local evidence store.
 
@@ -68,16 +68,20 @@ Deliverables:
 - [x] `src/tools/crawl.ts` — read-only, BFS link/form/asset/technology
       discovery through the guarded client; honors `maxDepth`, `maxUrls`, the
       request budget, deny rules, and `<base href>` resolution.
-- [ ] `src/tools/evidence.ts`.
-- [ ] `src/store/evidence-store.ts` with hashing, size caps, and redaction.
-- [ ] `capture_evidence`, `compare_evidence`, and `parse_response` tools.
-- [ ] `recon` CLI command (read-only crawl and attack-surface summary).
+- [x] `src/tools/evidence.ts` — `captureEvidence`, `compareEvidence`, and
+      `parseResponse` tools over the evidence store.
+- [x] `src/store/evidence-store.ts` with hashing, size caps, and redaction.
+- [x] `capture_evidence`, `compare_evidence`, and `parse_response` tools.
+- [x] `recon` CLI command (read-only crawl and attack-surface summary).
 
 Exit criteria:
 
-- Every outbound request passes scope → deny → authorization → policy → rate
-  limit → audit.
-- Evidence artifacts are hashed and redacted; no secrets in logs or prompts.
+- [x] Every outbound request passes scope → deny → authorization → policy →
+      rate limit → audit.
+- [x] Evidence artifacts are hashed and redacted; no secrets in logs or prompts.
+
+Status: complete. 87 unit tests pass; `npm run typecheck` and `npm run build`
+are clean.
 
 ## M3 — Deterministic checks (A01–A10)
 

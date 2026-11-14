@@ -69,8 +69,10 @@ At minimum, prove:
 - Credentials and tokens never appear in logs, evidence, or prompts.
 
 M1 implements the first six in `test/unit` (`scope.test.ts`, `policy.test.ts`,
-`authorization.test.ts`, `rate-limit.test.ts`, `intake.test.ts`). Redirect,
-credential-redaction, and evidence tests arrive with M2.
+`authorization.test.ts`, `rate-limit.test.ts`, `intake.test.ts`). M2 adds the
+redirect, credential-redaction, and evidence tests (`http.test.ts`,
+`crawl.test.ts`, `evidence-store.test.ts`, `evidence.test.ts`,
+`recon.test.ts`).
 
 ## 6. Finding quality metrics
 

@@ -197,8 +197,7 @@ test("granting approval does not bypass the read-only policy", async () => {
 });
 
 test("every reported finding has evidence and reproduction steps", async () => {
-  const page =
-    '<html><body><a href="/search?q=1">search</a></body></html>';
+  const page = '<html><body><a href="/search?q=1">search</a></body></html>';
   const { result } = await runLoop({
     scope: loopScope({ testClasses: ["A05"] }),
     modelEnabled: false,
@@ -222,9 +221,7 @@ test("every reported finding has evidence and reproduction steps", async () => {
     assert.ok(finding.reproduction.length > 0, `${finding.title} has no reproduction steps`);
   }
   assert.ok(
-    result.findings.some(
-      (finding) => finding.category === "A05" && /sql/i.test(finding.title),
-    ),
+    result.findings.some((finding) => finding.category === "A05" && /sql/i.test(finding.title)),
     "expected a SQL injection finding",
   );
 });
@@ -265,9 +262,10 @@ test("writes all report formats after verifying candidates", async () => {
   assert.match(markdown, /## Audit log/);
   assert.doesNotMatch(markdown, /Discarded candidate/);
 
-  const sarif = JSON.parse(
-    await readFile(join(result.reportDir, "report.sarif"), "utf8"),
-  ) as { version: string; runs: Array<{ results: unknown[] }> };
+  const sarif = JSON.parse(await readFile(join(result.reportDir, "report.sarif"), "utf8")) as {
+    version: string;
+    runs: Array<{ results: unknown[] }>;
+  };
   assert.equal(sarif.version, "2.1.0");
   assert.ok(Array.isArray(sarif.runs[0].results));
 });

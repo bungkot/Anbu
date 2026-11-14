@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -31,11 +26,7 @@ const EVENT_MARKERS: readonly RegExp[] = [
   /user=admin/i,
 ];
 
-const CORRELATION_HEADERS: readonly string[] = [
-  "x-request-id",
-  "x-correlation-id",
-  "x-trace-id",
-];
+const CORRELATION_HEADERS: readonly string[] = ["x-request-id", "x-correlation-id", "x-trace-id"];
 
 export interface LoggingProbe {
   path: string;
@@ -146,6 +137,10 @@ export const loggingCheck: Check = {
 
     const evidence = await captureAll(ctx, pairs);
     const candidates = analyzeLogging({ url: base, primary: primary.response, probes });
-    return checkResult(ctx, materialize(loggingCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(loggingCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

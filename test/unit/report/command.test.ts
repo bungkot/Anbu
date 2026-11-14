@@ -54,5 +54,8 @@ test("reportCommand refuses a file that is not an Anbu report", async () => {
 
 test("reportCommand refuses an unknown format", async () => {
   const { dir } = await writeRunReport();
-  await assert.rejects(() => reportCommand(["--run", dir, "--format", "xml"]), /unknown report format/);
+  await assert.rejects(
+    () => reportCommand(["--run", dir, "--format", "xml"]),
+    /unknown report format/,
+  );
 });

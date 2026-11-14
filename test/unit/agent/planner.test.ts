@@ -76,7 +76,9 @@ test("rejects an action kind outside the closed schema", () => {
 
 test("rejects an unknown check id", () => {
   const text = JSON.stringify({
-    actions: [{ kind: "run_check", checkId: "not-a-check", input: { url: "https://example.test/" } }],
+    actions: [
+      { kind: "run_check", checkId: "not-a-check", input: { url: "https://example.test/" } },
+    ],
   });
   const result = parsePlannerResponse(text, { maxActions: 5 });
   assert.equal(result.ok, false);
@@ -123,9 +125,7 @@ test("Planner.plan sends the prompts through the transport and parses the reply"
   const result = await planner.plan("system prompt", "user prompt");
 
   assert.equal(result.ok, true);
-  assert.deepEqual(transport.requests, [
-    { system: "system prompt", user: "user prompt" },
-  ]);
+  assert.deepEqual(transport.requests, [{ system: "system prompt", user: "user prompt" }]);
   if (result.ok) {
     assert.deepEqual(result.plan.actions, [{ kind: "halt", reason: "done" }]);
   }

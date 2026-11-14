@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResult,
-  EvidenceRef,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResult, EvidenceRef } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureResponse,
@@ -104,8 +99,7 @@ export function analyzeTls(
         affected: { url },
         severity: "high",
         reproduction: [`Observe the TLS handshake for ${url} (approved TLS probe).`],
-        remediation:
-          "Disable RC4, DES, 3DES, NULL, export-grade, and MD5-based cipher suites.",
+        remediation: "Disable RC4, DES, 3DES, NULL, export-grade, and MD5-based cipher suites.",
         details: `Negotiated cipher: ${cipher}`,
       });
     } else if (NO_FORWARD_SECRECY.test(cipher)) {
@@ -199,15 +193,18 @@ export function analyzeTls(
 
   // HSTS is reported here only for a real TLS observation, so the common
   // HTTP-only path does not duplicate the security-headers finding.
-  const hasHandshakeFacts =
-    observation.protocol !== undefined || observation.cipher !== undefined;
+  const hasHandshakeFacts = observation.protocol !== undefined || observation.cipher !== undefined;
   let isHttps: boolean;
   try {
     isHttps = new URL(url).protocol === "https:";
   } catch {
     isHttps = false;
   }
-  if (isHttps && hasHandshakeFacts && headerValue(observation.headers, "strict-transport-security") === undefined) {
+  if (
+    isHttps &&
+    hasHandshakeFacts &&
+    headerValue(observation.headers, "strict-transport-security") === undefined
+  ) {
     findings.push({
       title: "Strict-Transport-Security header is missing",
       affected: { url },
@@ -254,9 +251,7 @@ export const tlsCheck: Check = {
     if (captured !== undefined) evidence.push(captured);
 
     const tlsRecord = readOptionRecord(input.options, "tls");
-    const certificateRecord = tlsRecord
-      ? readOptionRecord(tlsRecord, "certificate")
-      : undefined;
+    const certificateRecord = tlsRecord ? readOptionRecord(tlsRecord, "certificate") : undefined;
     const candidates = analyzeTls(
       {
         url: primary.response.url,
@@ -267,6 +262,6 @@ export const tlsCheck: Check = {
       },
       ctx.now(),
     );
-    return checkResult(ctx, materialize(tlsCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(tlsCheck.metadata, candidates, evidence, input), evidence);
   },
 };

@@ -1,24 +1,12 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-  EvidenceRef,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult, EvidenceRef } from "./types.js";
 import { checkResult } from "./types.js";
-import {
-  captureResponse,
-  fetchPrimary,
-  materialize,
-  parseJsonBody,
-} from "./util.js";
+import { captureResponse, fetchPrimary, materialize, parseJsonBody } from "./util.js";
 
 const CONTEXT_HASH =
   /(?:password|passwd|pwd|hash|secret|credential)["'\s:=]{1,12}([a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})\b/i;
 const MD5CRYPT = /\$1\$[./0-9A-Za-z]{1,16}\$[./0-9A-Za-z]{22}/;
 const MYSQL_HASH = /\*[0-9A-Fa-f]{40,41}\b/;
-const STRONG_HASH =
-  /^\$(?:2[aby]|argon2|pbkdf2|scrypt|6\$|5\$|y\$)/i;
+const STRONG_HASH = /^\$(?:2[aby]|argon2|pbkdf2|scrypt|6\$|5\$|y\$)/i;
 
 function collectPlainPasswordPaths(value: unknown, path: string, out: string[]): void {
   if (value === null || typeof value !== "object") return;
@@ -52,9 +40,7 @@ export function analyzePasswordHash(response: CheckResponse): CandidateFinding[]
       title: "Weak password hash exposed in response",
       affected: { url: response.url },
       severity: "high",
-      reproduction: [
-        `Send ${response.method} ${response.url} and inspect the response body.`,
-      ],
+      reproduction: [`Send ${response.method} ${response.url} and inspect the response body.`],
       remediation:
         "Do not expose password hashes; store passwords with a memory-hard KDF (argon2id, scrypt, or bcrypt) and never return them in API responses.",
       details: `Matched a password-related field next to a ${contextMatch[1].length}-character hex digest.`,
@@ -68,8 +54,7 @@ export function analyzePasswordHash(response: CheckResponse): CandidateFinding[]
       affected: { url: response.url },
       severity: "high",
       reproduction: [`Send ${response.method} ${response.url} and inspect the response body.`],
-      remediation:
-        "Migrate md5crypt hashes to argon2id, scrypt, or bcrypt on next authentication.",
+      remediation: "Migrate md5crypt hashes to argon2id, scrypt, or bcrypt on next authentication.",
       details: "Detected an `$1$` md5crypt hash.",
     });
   }
@@ -95,9 +80,7 @@ export function analyzePasswordHash(response: CheckResponse): CandidateFinding[]
         title: "Password value returned in response",
         affected: { url: response.url },
         severity: "high",
-        reproduction: [
-          `Send ${response.method} ${response.url} and inspect the JSON response.`,
-        ],
+        reproduction: [`Send ${response.method} ${response.url} and inspect the JSON response.`],
         remediation:
           "Never return password values (even hashed) in API responses; store them only with a memory-hard KDF.",
         details: `JSON field ${path} contains a non-hash password value.`,
@@ -142,7 +125,7 @@ export const passwordHashCheck: Check = {
     const candidates = analyzePasswordHash(primary.response);
     return checkResult(
       ctx,
-      materialize(passwordHashCheck.metadata, candidates, evidence),
+      materialize(passwordHashCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

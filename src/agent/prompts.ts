@@ -85,7 +85,10 @@ function formatAttackSurface(ctx: RunContext): string {
     `Forms (${summary.forms.length}):`,
     ...summary.forms
       .slice(0, 20)
-      .map((form) => `- ${form.method} ${redactPromptUrl(form.action)} (${form.parameters.join(", ")})`),
+      .map(
+        (form) =>
+          `- ${form.method} ${redactPromptUrl(form.action)} (${form.parameters.join(", ")})`,
+      ),
     `Technologies (${summary.technologies.length}):`,
     ...summary.technologies
       .slice(0, 20)
@@ -116,7 +119,9 @@ function formatResults(ctx: RunContext): string {
 function formatAvailableChecks(ctx: RunContext): string {
   const allowed = new Set(ctx.scope.testClasses);
   return CHECKS.filter(
-    (check) => check.metadata.readOnly && check.metadata.categories.some((category) => allowed.has(category)),
+    (check) =>
+      check.metadata.readOnly &&
+      check.metadata.categories.some((category) => allowed.has(category)),
   )
     .map(
       (check) =>

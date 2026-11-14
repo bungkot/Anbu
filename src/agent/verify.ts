@@ -61,12 +61,25 @@ function setVerification(finding: Finding, verification: FindingVerification): v
 }
 
 /**
- * Rebuild a closed check input from the finding and its captured request.
- * Redacted bodies are dropped rather than replayed. Headers are intentionally
- * not replayed: captured headers are sanitized, and checks authenticate through
- * the guarded client, not through stored credentials.
+ * Rebuild a closed check input from the finding. The sanitized check input is
+ * preferred because it retains options (alternate ids, candidate paths, and so
+ * on) that the captured request does not contain. Findings without a stored
+ * input fall back to their captured request; redacted bodies are dropped rather
+ * than replayed. Headers are intentionally not replayed: captured headers are
+ * sanitized, and checks authenticate through the guarded client, not through
+ * stored credentials.
  */
 function rebuildInput(finding: Finding, method: string, body: string | undefined): CheckInput {
+  const stored = finding.checkInput;
+  if (stored !== undefined) {
+    const input: CheckInput = { url: finding.affected.url };
+    if (stored.method !== undefined && stored.method !== "GET") input.method = stored.method;
+    if (stored.parameter !== undefined) input.parameter = stored.parameter;
+    if (stored.body !== undefined) input.body = stored.body;
+    if (stored.options !== undefined) input.options = stored.options;
+    return input;
+  }
+
   const input: CheckInput = { url: finding.affected.url };
   if (finding.affected.parameter !== undefined) input.parameter = finding.affected.parameter;
   const normalized = method.toUpperCase();
@@ -144,6 +157,27 @@ export async function verifyFindings(options: VerifyOptions): Promise<Finding[]>
       continue;
     }
 
+    const ref = first.evidence[0];
+    const artifact = ref === undefined ? undefined : await options.store.get(ref.evidenceId);
+    if (ref === undefined || artifact === undefined || artifact.sha256 !== ref.sha256) {
+      const reason = "evidence is missing or failed integrity verification";
+      for (const finding of group) {
+        setVerification(finding, { status: "discarded", reason, attempted: false });
+      }
+      await auditFinding(options.audit, "verify.discarded", first, reason);
+      continue;
+    }
+
+    if (first.checkInput?.redacted === true) {
+      const reason =
+        "the stored check input was redacted, so the finding cannot be reproduced faithfully";
+      for (const finding of group) {
+        setVerification(finding, { status: "probable", reason, attempted: false });
+      }
+      await auditFinding(options.audit, "verify.skipped", first, reason);
+      continue;
+    }
+
     if (!check.metadata.readOnly || check.metadata.requiresApproval) {
       const approved = await approval.approve({
         action: `verify:${check.metadata.id}`,
@@ -163,17 +197,6 @@ export async function verifyFindings(options: VerifyOptions): Promise<Finding[]>
         await auditFinding(options.audit, "verify.skipped", first, reason);
         continue;
       }
-    }
-
-    const ref = first.evidence[0];
-    const artifact = ref === undefined ? undefined : await options.store.get(ref.evidenceId);
-    if (ref === undefined || artifact === undefined || artifact.sha256 !== ref.sha256) {
-      const reason = "evidence is missing or failed integrity verification";
-      for (const finding of group) {
-        setVerification(finding, { status: "discarded", reason, attempted: false });
-      }
-      await auditFinding(options.audit, "verify.discarded", first, reason);
-      continue;
     }
 
     const input = rebuildInput(first, artifact.request.method, artifact.request.body);

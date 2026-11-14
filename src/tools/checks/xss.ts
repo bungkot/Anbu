@@ -1,17 +1,6 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
-import {
-  captureAll,
-  fetchPrimary,
-  materialize,
-  readOptionString,
-  withQuery,
-} from "./util.js";
+import { captureAll, fetchPrimary, materialize, readOptionString, withQuery } from "./util.js";
 
 /** Unique marker reflected by the probes. It carries no executable payload. */
 export const XSS_MARKER = "anbumarker";
@@ -143,6 +132,6 @@ export const xssCheck: Check = {
       baseline: primary.response,
       probes,
     });
-    return checkResult(ctx, materialize(xssCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(xssCheck.metadata, candidates, evidence, input), evidence);
   },
 };

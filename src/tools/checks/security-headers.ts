@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResult,
-  EvidenceRef,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResult, EvidenceRef } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureResponse,
@@ -85,10 +80,7 @@ export function analyzeSecurityHeaders(
         "Deploy a restrictive Content-Security-Policy appropriate to the application; avoid `unsafe-inline` and `unsafe-eval`.",
       details: "CSP was absent from the response.",
     });
-  } else if (
-    /unsafe-inline|unsafe-eval/i.test(csp) &&
-    !/nonce-|sha(?:256|384|512)-/i.test(csp)
-  ) {
+  } else if (/unsafe-inline|unsafe-eval/i.test(csp) && !/nonce-|sha(?:256|384|512)-/i.test(csp)) {
     findings.push({
       title: "Content-Security-Policy allows unsafe script execution",
       affected: { url },
@@ -111,10 +103,7 @@ export function analyzeSecurityHeaders(
         "Set `X-Frame-Options: DENY` (or SAMEORIGIN) or add a CSP `frame-ancestors` directive.",
       details: "Neither X-Frame-Options nor CSP frame-ancestors was present.",
     });
-  } else if (
-    xFrameOptions !== undefined &&
-    !/deny|sameorigin/i.test(xFrameOptions)
-  ) {
+  } else if (xFrameOptions !== undefined && !/deny|sameorigin/i.test(xFrameOptions)) {
     findings.push({
       title: "X-Frame-Options header has an unsafe value",
       affected: { url },
@@ -152,8 +141,7 @@ export function analyzeSecurityHeaders(
       affected: { url },
       severity: "low",
       reproduction: [`Send a GET request to ${url} and inspect the response headers.`],
-      remediation:
-        "Set a Permissions-Policy that disables features the application does not use.",
+      remediation: "Set a Permissions-Policy that disables features the application does not use.",
       details: "Permissions-Policy was absent from the response.",
     });
   }
@@ -246,6 +234,10 @@ export const securityHeadersCheck: Check = {
       url: primary.response.url,
       headers: primary.response.headers,
     });
-    return checkResult(ctx, materialize(securityHeadersCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(securityHeadersCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

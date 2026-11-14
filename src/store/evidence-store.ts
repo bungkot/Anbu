@@ -258,6 +258,19 @@ function redactBody(body: string | undefined, contentType: string): string | und
   return redactWithValueRegex(body);
 }
 
+/**
+ * Redact credentials from arbitrary text using the same patterns as evidence
+ * capture. Shared with the sanitized check input stored on findings.
+ */
+export function redactCredentialText(value: string): string {
+  return redactWithValueRegex(value);
+}
+
+/** Redact credentials from a structured value (object, array, or string). */
+export function redactCredentialValue(value: unknown): unknown {
+  return redactJsonValue(value);
+}
+
 function parseCookieNames(headers: Record<string, string>): string[] {
   const names = new Set<string>();
   for (const [name, value] of Object.entries(headers)) {

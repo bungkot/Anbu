@@ -53,11 +53,7 @@ export class RunBudget {
   private stopped: StopReason | undefined;
   private readonly findingsByCategory: Record<OwaspCategory, number> = { ...ZERO_FINDINGS };
 
-  constructor(options: {
-    limits: BudgetLimits;
-    rateLimiter: RateLimiter;
-    now?: () => Date;
-  }) {
+  constructor(options: { limits: BudgetLimits; rateLimiter: RateLimiter; now?: () => Date }) {
     this.limits = options.limits;
     this.rateLimiter = options.rateLimiter;
     this.now = options.now ?? (() => new Date());

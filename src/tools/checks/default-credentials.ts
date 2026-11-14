@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -156,7 +151,7 @@ export const defaultCredentialsCheck: Check = {
     const candidates = analyzeDefaultCredentials({ url: input.url, probes });
     return checkResult(
       ctx,
-      materialize(defaultCredentialsCheck.metadata, candidates, evidence),
+      materialize(defaultCredentialsCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

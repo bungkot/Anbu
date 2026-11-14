@@ -70,4 +70,3 @@ test("isApprovedAnswer accepts only an explicit affirmative", () => {
   assert.equal(isApprovedAnswer("yes please"), false);
   assert.equal(isApprovedAnswer("true"), false);
 });
-

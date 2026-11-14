@@ -5,6 +5,7 @@ import type {
   Confidence,
   EvidenceRef,
   Finding,
+  FindingCheckInput,
   Severity,
 } from "../../model/finding.js";
 import type { OwaspCategory, Scope } from "../../model/scope.js";
@@ -195,6 +196,7 @@ export function makeFinding(
   metadata: CheckMetadata,
   candidate: CandidateFinding,
   evidence: readonly EvidenceRef[] = [],
+  checkInput?: FindingCheckInput,
 ): Finding {
   return {
     id: `sha256:${findingIdentity(metadata, candidate, evidence)}`,
@@ -204,6 +206,7 @@ export function makeFinding(
     confidence: candidate.confidence ?? "probable",
     status: "candidate",
     checkId: metadata.id,
+    checkInput,
     title: candidate.title,
     affected: candidate.affected,
     evidence: [...evidence],

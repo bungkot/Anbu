@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -131,7 +126,7 @@ export const authzMethodsCheck: Check = {
     const candidates = analyzeAuthzMethods({ url: input.url, probes });
     return checkResult(
       ctx,
-      materialize(authzMethodsCheck.metadata, candidates, evidence),
+      materialize(authzMethodsCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -116,8 +111,7 @@ export const uploadCheck: Check = {
     const fieldName = readOptionString(input.options, "fieldName") ?? "file";
     const filename = readOptionString(input.options, "filename") ?? "anbu-check.html";
     const contentType = readOptionString(input.options, "contentType") ?? "text/html";
-    const content =
-      readOptionString(input.options, "content") ?? `<p>${DEFAULT_MARKER}</p>`;
+    const content = readOptionString(input.options, "content") ?? `<p>${DEFAULT_MARKER}</p>`;
     const marker = readOptionString(input.options, "marker") ?? DEFAULT_MARKER;
 
     const primary = await fetchPrimary(ctx, input);
@@ -169,6 +163,10 @@ export const uploadCheck: Check = {
       retrieval,
       marker,
     });
-    return checkResult(ctx, materialize(uploadCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(uploadCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

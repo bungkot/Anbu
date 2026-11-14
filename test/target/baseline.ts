@@ -58,9 +58,7 @@ export function compareBaseline(report: Report, baseline: BaselineFixture): Base
   const reportedCheckIds = [
     ...new Set(
       reportedFindings.flatMap((finding) =>
-        typeof finding.checkId === "string" && finding.checkId.length > 0
-          ? [finding.checkId]
-          : [],
+        typeof finding.checkId === "string" && finding.checkId.length > 0 ? [finding.checkId] : [],
       ),
     ),
   ].sort();

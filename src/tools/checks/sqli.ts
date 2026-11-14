@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -49,7 +44,7 @@ const SQL_ERROR_SIGNATURES: readonly RegExp[] = [
 
 const SQLI_PAYLOADS: readonly string[] = [
   "'",
-  "\"",
+  '"',
   "1 AND 1=1",
   "1 AND 1=2",
   "1;--",
@@ -99,7 +94,8 @@ export function analyzeSqlInjection(observation: SqlInjectionObservation): Candi
   if (trueProbe !== undefined && falseProbe !== undefined) {
     const trueBody = trueProbe.response.bodyText.trim();
     const falseBody = falseProbe.response.bodyText.trim();
-    const reflected = trueBody.includes(trueProbe.payload) || falseBody.includes(falseProbe.payload);
+    const reflected =
+      trueBody.includes(trueProbe.payload) || falseBody.includes(falseProbe.payload);
     const different = trueBody !== falseBody;
     if (
       !reflected &&
@@ -183,6 +179,6 @@ export const sqliCheck: Check = {
       baseline: primary.response,
       probes,
     });
-    return checkResult(ctx, materialize(sqliCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(sqliCheck.metadata, candidates, evidence, input), evidence);
   },
 };

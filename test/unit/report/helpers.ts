@@ -16,7 +16,9 @@ export function makeFinding(overrides: Partial<Finding> = {}): Finding {
     checkId: "sqli",
     title: "SQL error message reflected after an injection probe",
     affected: { url: "https://example.test/search", parameter: "q" },
-    evidence: [{ evidenceId: "sha256:evidence", sha256: "evidence", path: "artifacts/evidence.json" }],
+    evidence: [
+      { evidenceId: "sha256:evidence", sha256: "evidence", path: "artifacts/evidence.json" },
+    ],
     reproduction: ["Send GET https://example.test/search with q=' and inspect the response body."],
     remediation: "Use parameterized queries or a query builder for every database call.",
     falsePositiveAnalysis: "The error signature appears only after the probe.",

@@ -1,17 +1,6 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
-import {
-  captureAll,
-  fetchPrimary,
-  materialize,
-  readOptionString,
-  withQuery,
-} from "./util.js";
+import { captureAll, fetchPrimary, materialize, readOptionString, withQuery } from "./util.js";
 
 /** File-content signatures that indicate a successful traversal. */
 const TRAVERSAL_SIGNATURES: readonly RegExp[] = [
@@ -134,6 +123,10 @@ export const pathTraversalCheck: Check = {
       baseline: primary.response,
       probes,
     });
-    return checkResult(ctx, materialize(pathTraversalCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(pathTraversalCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

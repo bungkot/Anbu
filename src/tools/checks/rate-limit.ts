@@ -1,17 +1,6 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
-import {
-  captureAll,
-  fetchPrimary,
-  headerValue,
-  materialize,
-  readOptionNumber,
-} from "./util.js";
+import { captureAll, fetchPrimary, headerValue, materialize, readOptionNumber } from "./util.js";
 
 const DEFAULT_REQUESTS = 12;
 const MINIMUM_SAMPLE = 8;
@@ -69,8 +58,7 @@ export const rateLimitCheck: Check = {
     id: "rate-limit",
     toolName: "check_rate_limit",
     title: "Rate limiting behavior",
-    description:
-      "Sends a bounded burst of read-only requests and observes throttling behavior.",
+    description: "Sends a bounded burst of read-only requests and observes throttling behavior.",
     category: "A06",
     categories: ["A06", "A10"],
     cwe: "CWE-770",
@@ -118,6 +106,10 @@ export const rateLimitCheck: Check = {
 
     const evidence = await captureAll(ctx, pairs);
     const candidates = analyzeRateLimit({ url: input.url, responses });
-    return checkResult(ctx, materialize(rateLimitCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(rateLimitCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

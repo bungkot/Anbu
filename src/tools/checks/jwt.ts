@@ -1,17 +1,6 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
-import {
-  captureAll,
-  fetchPrimary,
-  headerValue,
-  materialize,
-  readOptionString,
-} from "./util.js";
+import { captureAll, fetchPrimary, headerValue, materialize, readOptionString } from "./util.js";
 
 const JWT_PATTERN = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*/;
 const TOKEN_QUERY_KEYS = ["token", "access_token", "id_token", "jwt"];
@@ -100,7 +89,8 @@ export function analyzeJwt(observation: JwtObservation): CandidateFinding[] {
       severity: "medium",
       confidence: "unverified",
       reproduction: [`Inspect the JWT returned by ${observation.url}.`],
-      remediation: "Reject malformed tokens and validate the header and payload structure before use.",
+      remediation:
+        "Reject malformed tokens and validate the header and payload structure before use.",
       details: "The token segments could not be decoded as JSON.",
     });
     return findings;
@@ -197,7 +187,7 @@ export const jwtCheck: Check = {
     const supplied = readOptionString(input.options, "token");
     if (supplied !== undefined) {
       const candidates = analyzeJwt({ url: input.url, token: supplied, now: ctx.now() });
-      return checkResult(ctx, materialize(jwtCheck.metadata, candidates, []), []);
+      return checkResult(ctx, materialize(jwtCheck.metadata, candidates, [], input), []);
     }
 
     const primary = await fetchPrimary(ctx, input);
@@ -210,19 +200,13 @@ export const jwtCheck: Check = {
 
     const token = extractJwt(primary.response);
     if (token === undefined) {
-      return checkResult(
-        ctx,
-        [],
-        [],
-        undefined,
-        "no JWT found in the response body or headers",
-      );
+      return checkResult(ctx, [], [], undefined, "no JWT found in the response body or headers");
     }
 
     const evidence = await captureAll(ctx, [
       { request: primary.request, response: primary.response },
     ]);
     const candidates = analyzeJwt({ url: input.url, token, now: ctx.now() });
-    return checkResult(ctx, materialize(jwtCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(jwtCheck.metadata, candidates, evidence, input), evidence);
   },
 };

@@ -62,9 +62,7 @@ function formatPrompt(request: ApprovalRequest): string {
  * Interactive approval provider for an operator running a state-changing test.
  * Fails closed: a missing answer, EOF, or a read error denies the request.
  */
-export function interactiveApprovals(
-  options: InteractiveApprovalOptions = {},
-): ApprovalProvider {
+export function interactiveApprovals(options: InteractiveApprovalOptions = {}): ApprovalProvider {
   let rl: ReturnType<typeof createInterface> | undefined;
 
   async function defaultAsk(request: ApprovalRequest): Promise<boolean> {

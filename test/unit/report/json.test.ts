@@ -23,7 +23,11 @@ test("renderJson reports only confirmed and probable findings by default", () =>
   };
 
   assert.equal(parsed.findings.length, 2);
-  assert.ok(parsed.findings.every((finding) => finding.status === "confirmed" || finding.status === "probable"));
+  assert.ok(
+    parsed.findings.every(
+      (finding) => finding.status === "confirmed" || finding.status === "probable",
+    ),
+  );
   assert.equal(parsed.withheldFindings, 1);
 });
 

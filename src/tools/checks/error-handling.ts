@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -179,6 +174,10 @@ export const errorHandlingCheck: Check = {
       }),
       ...analyzeServerVersionHeaders(primary.response),
     ];
-    return checkResult(ctx, materialize(errorHandlingCheck.metadata, candidates, evidence), evidence);
+    return checkResult(
+      ctx,
+      materialize(errorHandlingCheck.metadata, candidates, evidence, input),
+      evidence,
+    );
   },
 };

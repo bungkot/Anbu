@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import { captureAll, fetchPrimary, materialize } from "./util.js";
 
@@ -126,6 +121,6 @@ export const xxeCheck: Check = {
 
     const evidence = await captureAll(ctx, pairs);
     const candidates = analyzeXxe({ url: input.url, baseline: primary.response, probes });
-    return checkResult(ctx, materialize(xxeCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(xxeCheck.metadata, candidates, evidence, input), evidence);
   },
 };

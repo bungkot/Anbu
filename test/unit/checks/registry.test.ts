@@ -88,10 +88,7 @@ test("registry exposes metadata for every check", () => {
 
 test("every OWASP Top 10:2025 category has at least one check", () => {
   for (const category of OWASP_CATEGORIES) {
-    assert.ok(
-      checksForCategory(category).length > 0,
-      `no deterministic check covers ${category}`,
-    );
+    assert.ok(checksForCategory(category).length > 0, `no deterministic check covers ${category}`);
   }
 });
 

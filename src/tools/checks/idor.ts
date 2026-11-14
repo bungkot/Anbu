@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -133,8 +128,7 @@ export const idorCheck: Check = {
       return checkResult(ctx, [], [], undefined, "idor check requires a parameter name");
     }
     const alternates =
-      readOptionStringArray(input.options, "alternates") ??
-      deriveAlternates(input.url, parameter);
+      readOptionStringArray(input.options, "alternates") ?? deriveAlternates(input.url, parameter);
     if (alternates === undefined || alternates.length === 0) {
       return checkResult(
         ctx,
@@ -173,6 +167,6 @@ export const idorCheck: Check = {
       baseline: primary.response,
       probes,
     });
-    return checkResult(ctx, materialize(idorCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(idorCheck.metadata, candidates, evidence, input), evidence);
   },
 };

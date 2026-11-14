@@ -6,17 +6,16 @@ import type {
   CheckCaptureResponse,
   CheckContext,
   CheckFetchInput,
+  CheckInput,
   CheckResponse,
   CheckResult,
   CheckMetadata,
   EvidenceRef,
 } from "./types.js";
 import { checkResult, makeFinding } from "./types.js";
+import { sanitizeCheckInput } from "./sanitize.js";
 
-export function headerValue(
-  headers: Record<string, string>,
-  name: string,
-): string | undefined {
+export function headerValue(headers: Record<string, string>, name: string): string | undefined {
   const lower = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
     if (key.toLowerCase() === lower) return value;
@@ -25,10 +24,7 @@ export function headerValue(
 }
 
 /** All values for a header name. `set-cookie` may appear more than once. */
-export function headerValues(
-  headers: Record<string, string>,
-  name: string,
-): string[] {
+export function headerValues(headers: Record<string, string>, name: string): string[] {
   const lower = name.toLowerCase();
   const values: string[] = [];
   for (const [key, value] of Object.entries(headers)) {
@@ -100,10 +96,7 @@ export function readOptionRecord(
   return value as Record<string, unknown>;
 }
 
-export function readRecordString(
-  record: Record<string, unknown>,
-  key: string,
-): string | undefined {
+export function readRecordString(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key];
   return typeof value === "string" ? value : undefined;
 }
@@ -116,10 +109,7 @@ export function readRecordBoolean(
   return typeof value === "boolean" ? value : undefined;
 }
 
-export function readRecordNumber(
-  record: Record<string, unknown>,
-  key: string,
-): number | undefined {
+export function readRecordNumber(record: Record<string, unknown>, key: string): number | undefined {
   const value = record[key];
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -238,13 +228,18 @@ export async function captureResponse(
   return ctx.capture(captureRequest, captureResponse);
 }
 
-/** Convert candidates into findings that share the captured evidence. */
+/**
+ * Convert candidates into findings that share the captured evidence and the
+ * sanitized closed check input, so options-based checks can be reproduced.
+ */
 export function materialize(
   metadata: CheckMetadata,
   candidates: readonly CandidateFinding[],
   evidence: readonly EvidenceRef[],
+  input?: CheckInput,
 ): Finding[] {
-  return candidates.map((candidate) => makeFinding(metadata, candidate, evidence));
+  const checkInput = input === undefined ? undefined : sanitizeCheckInput(input).input;
+  return candidates.map((candidate) => makeFinding(metadata, candidate, evidence, checkInput));
 }
 
 /** Convenience result builder for checks that captured evidence. */

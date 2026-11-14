@@ -23,9 +23,7 @@ test("sanitizeText truncates long input with an ellipsis", () => {
 });
 
 test("redactPromptUrl redacts credential-like query keys and drops the fragment", () => {
-  const redacted = redactPromptUrl(
-    "https://example.test/search?q=1&token=abc123&page=2#fragment",
-  );
+  const redacted = redactPromptUrl("https://example.test/search?q=1&token=abc123&page=2#fragment");
   assert.ok(redacted.includes("q=1"));
   assert.ok(redacted.includes("page=2"));
   assert.ok(redacted.includes("token=%5BREDACTED%5D") || redacted.includes("token=[REDACTED]"));

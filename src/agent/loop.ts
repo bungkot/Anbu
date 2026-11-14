@@ -4,7 +4,13 @@ import { join } from "node:path";
 import { config } from "../config.js";
 import { AuditLog } from "../audit/log.js";
 import { RateLimiter } from "../guardrails/rate-limit.js";
-import type { AuditSummary, BudgetStatus, CoverageEntry, Methodology, Report } from "../model/report.js";
+import type {
+  AuditSummary,
+  BudgetStatus,
+  CoverageEntry,
+  Methodology,
+  Report,
+} from "../model/report.js";
 import { REPORT_VERSION } from "../model/report.js";
 import type { Finding } from "../model/finding.js";
 import type { OwaspCategory, Scope } from "../model/scope.js";
@@ -164,7 +170,11 @@ function failureResult(errors: string[]): PentestRunResult {
   };
 }
 
-function minimalAttackSurface(scope: Scope, maxDepth: number, maxUrls: number): AttackSurfaceSummary {
+function minimalAttackSurface(
+  scope: Scope,
+  maxDepth: number,
+  maxUrls: number,
+): AttackSurfaceSummary {
   const startUrls = defaultStartUrls(scope);
   return {
     targets: startUrls,
@@ -189,7 +199,11 @@ function minimalAttackSurface(scope: Scope, maxDepth: number, maxUrls: number): 
  */
 async function writeReportFiles(evidenceRoot: string, report: Report): Promise<void> {
   await mkdir(evidenceRoot, { recursive: true });
-  await writeFile(join(evidenceRoot, "report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await writeFile(
+    join(evidenceRoot, "report.json"),
+    `${JSON.stringify(report, null, 2)}\n`,
+    "utf8",
+  );
   await writeFile(join(evidenceRoot, "report.md"), renderMarkdown(report), "utf8");
   await writeFile(join(evidenceRoot, "report.sarif"), renderSarif(report), "utf8");
 }

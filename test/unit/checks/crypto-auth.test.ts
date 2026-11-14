@@ -1,12 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  analyzeDefaultCredentials,
-} from "../../../src/tools/checks/default-credentials.js";
-import {
-  analyzeJwt,
-  extractJwt,
-} from "../../../src/tools/checks/jwt.js";
+import { analyzeDefaultCredentials } from "../../../src/tools/checks/default-credentials.js";
+import { analyzeJwt, extractJwt } from "../../../src/tools/checks/jwt.js";
 import { response } from "./helpers.js";
 
 const url = "https://example.test/api/session";

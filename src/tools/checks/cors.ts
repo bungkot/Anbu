@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import { captureAll, fetchPrimary, headerValue, materialize } from "./util.js";
 
@@ -121,6 +116,6 @@ export const corsCheck: Check = {
 
     const evidence = await captureAll(ctx, pairs);
     const candidates = analyzeCors({ url: input.url, probes });
-    return checkResult(ctx, materialize(corsCheck.metadata, candidates, evidence), evidence);
+    return checkResult(ctx, materialize(corsCheck.metadata, candidates, evidence, input), evidence);
   },
 };

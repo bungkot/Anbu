@@ -54,11 +54,7 @@ function containedFetch(baseUrl: string, requestedUrls: string[]): typeof fetch 
   const realFetch = globalThis.fetch;
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     requestedUrls.push(url);
     if (url !== baseUrl && !url.startsWith(`${baseUrl}/`)) {
       throw new Error(`refusing a request outside the authorized fixture: ${url}`);
@@ -108,10 +104,7 @@ test("the local fixture baseline reproduces with no unexplained findings or miss
     const baseline = await loadBaseline(join(here, "baselines", "local-fixture.json"));
     const comparison = compareBaseline(result.report, baseline);
     assert.equal(comparison.ok, true, JSON.stringify(comparison, null, 2));
-    assert.deepEqual(
-      comparison.reportedCheckIds,
-      [...baseline.expectedReportedCheckIds].sort(),
-    );
+    assert.deepEqual(comparison.reportedCheckIds, [...baseline.expectedReportedCheckIds].sort());
 
     for (const name of ["report.json", "report.md", "report.sarif"]) {
       await access(join(result.reportDir, name));

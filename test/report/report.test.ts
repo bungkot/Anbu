@@ -51,9 +51,7 @@ test("rendered reports carry methodology, coverage, budgets, audit, and only rep
     );
     assert.ok(defaultJson.withheldFindings >= 1);
 
-    const allJson = JSON.parse(
-      renderJson(result.report, { includeDiscarded: true }),
-    ) as JsonReport;
+    const allJson = JSON.parse(renderJson(result.report, { includeDiscarded: true })) as JsonReport;
     assert.equal(allJson.findings.length, result.report.findings.length);
 
     const markdown = renderMarkdown(result.report);

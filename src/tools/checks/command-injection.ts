@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -108,7 +103,13 @@ export const commandInjectionCheck: Check = {
   async run(ctx, input): Promise<CheckResult> {
     const parameter = input.parameter ?? readOptionString(input.options, "parameter");
     if (parameter === undefined) {
-      return checkResult(ctx, [], [], undefined, "command-injection check requires a parameter name");
+      return checkResult(
+        ctx,
+        [],
+        [],
+        undefined,
+        "command-injection check requires a parameter name",
+      );
     }
 
     const primary = await fetchPrimary(ctx, input);
@@ -141,7 +142,7 @@ export const commandInjectionCheck: Check = {
     });
     return checkResult(
       ctx,
-      materialize(commandInjectionCheck.metadata, candidates, evidence),
+      materialize(commandInjectionCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

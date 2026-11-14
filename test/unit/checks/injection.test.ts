@@ -1,8 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  analyzeCommandInjection,
-} from "../../../src/tools/checks/command-injection.js";
+import { analyzeCommandInjection } from "../../../src/tools/checks/command-injection.js";
 import { analyzePathTraversal } from "../../../src/tools/checks/path-traversal.js";
 import { analyzeSqlInjection } from "../../../src/tools/checks/sqli.js";
 import { analyzeXss } from "../../../src/tools/checks/xss.js";
@@ -45,7 +43,10 @@ test("SQLi analyzer ignores a signature that is already in the baseline", () => 
     parameter: "q",
     baseline,
     probes: [
-      { payload: "'", response: response({ bodyText: "Warning: mysql_connect(): something went wrong" }) },
+      {
+        payload: "'",
+        response: response({ bodyText: "Warning: mysql_connect(): something went wrong" }),
+      },
     ],
   });
   assert.equal(findings.length, 0);
@@ -161,7 +162,8 @@ test("path-traversal analyzer detects protected file content", () => {
       {
         payload: "../../../../etc/passwd",
         response: response({
-          bodyText: "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
+          bodyText:
+            "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
         }),
       },
     ],

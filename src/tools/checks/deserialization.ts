@@ -1,8 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import { captureAll, fetchPrimary, materialize, readOptionString } from "./util.js";
 
@@ -47,7 +43,9 @@ export interface DeserializationObservation {
  * Pure analyzer: detect serialization formats that are commonly unsafe when
  * they are deserialized without strict type validation.
  */
-export function analyzeDeserialization(observation: DeserializationObservation): CandidateFinding[] {
+export function analyzeDeserialization(
+  observation: DeserializationObservation,
+): CandidateFinding[] {
   const findings: CandidateFinding[] = [];
   const body = observation.body;
   if (body.length === 0) return findings;
@@ -98,7 +96,11 @@ export const deserializationCheck: Check = {
     const supplied = readOptionString(input.options, "body");
     if (supplied !== undefined) {
       const candidates = analyzeDeserialization({ url: input.url, body: supplied });
-      return checkResult(ctx, materialize(deserializationCheck.metadata, candidates, []), []);
+      return checkResult(
+        ctx,
+        materialize(deserializationCheck.metadata, candidates, [], input),
+        [],
+      );
     }
 
     const primary = await fetchPrimary(ctx, input);
@@ -118,7 +120,7 @@ export const deserializationCheck: Check = {
     });
     return checkResult(
       ctx,
-      materialize(deserializationCheck.metadata, candidates, evidence),
+      materialize(deserializationCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

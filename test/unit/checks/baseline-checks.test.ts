@@ -6,12 +6,8 @@ import {
   parseDependencies,
   parseLockfile,
 } from "../../../src/tools/checks/dependencies.js";
-import {
-  analyzePasswordHash,
-} from "../../../src/tools/checks/password-hash.js";
-import {
-  analyzeSecurityHeaders,
-} from "../../../src/tools/checks/security-headers.js";
+import { analyzePasswordHash } from "../../../src/tools/checks/password-hash.js";
+import { analyzeSecurityHeaders } from "../../../src/tools/checks/security-headers.js";
 import { analyzeTls } from "../../../src/tools/checks/tls.js";
 import { response } from "./helpers.js";
 

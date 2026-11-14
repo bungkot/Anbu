@@ -1,11 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Severity } from "../../model/finding.js";
-import type {
-  CandidateFinding,
-  Check,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import { materialize, readOptionString } from "./util.js";
 
@@ -162,9 +158,7 @@ export function parseLockfile(json: unknown): DependencyRef[] {
 }
 
 /** Read `package-lock.json` from a project directory. */
-export async function loadNpmLockfile(
-  projectDir: string,
-): Promise<DependencyRef[] | undefined> {
+export async function loadNpmLockfile(projectDir: string): Promise<DependencyRef[] | undefined> {
   let raw: string;
   try {
     raw = await readFile(join(projectDir, "package-lock.json"), "utf8");
@@ -246,10 +240,6 @@ export const dependenciesCheck: Check = {
       }
     }
     const candidates = analyzeDependencies(dependencies);
-    return checkResult(
-      ctx,
-      materialize(dependenciesCheck.metadata, candidates, []),
-      [],
-    );
+    return checkResult(ctx, materialize(dependenciesCheck.metadata, candidates, [], input), []);
   },
 };

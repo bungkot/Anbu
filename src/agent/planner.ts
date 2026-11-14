@@ -83,7 +83,9 @@ function parseStringRecord(value: unknown): Record<string, string> | undefined {
   return out;
 }
 
-function parseCheckInput(value: unknown): { ok: true; input: CheckInput } | { ok: false; error: string } {
+function parseCheckInput(
+  value: unknown,
+): { ok: true; input: CheckInput } | { ok: false; error: string } {
   if (!isRecord(value)) return { ok: false, error: "must be an object" };
   if (typeof value.url !== "string" || value.url.length === 0) {
     return { ok: false, error: "url must be a non-empty string" };
@@ -160,7 +162,8 @@ function parseAction(value: unknown, allowedCategories?: ReadonlySet<OwaspCatego
 /** Strict parse of the planner response. Unknown fields are ignored. */
 export function parsePlannerResponse(text: string, options: ParseOptions): PlannerResult {
   const json = extractJsonObject(text);
-  if (json === undefined) return { ok: false, error: "planner response did not contain a JSON object" };
+  if (json === undefined)
+    return { ok: false, error: "planner response did not contain a JSON object" };
 
   let value: unknown;
   try {

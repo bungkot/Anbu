@@ -1,9 +1,4 @@
-import type {
-  CandidateFinding,
-  Check,
-  CheckResponse,
-  CheckResult,
-} from "./types.js";
+import type { CandidateFinding, Check, CheckResponse, CheckResult } from "./types.js";
 import { checkResult } from "./types.js";
 import {
   captureAll,
@@ -168,7 +163,7 @@ export const forceBrowsingCheck: Check = {
     const candidates = analyzeForceBrowsing({ url: base, probes });
     return checkResult(
       ctx,
-      materialize(forceBrowsingCheck.metadata, candidates, evidence),
+      materialize(forceBrowsingCheck.metadata, candidates, evidence, input),
       evidence,
     );
   },

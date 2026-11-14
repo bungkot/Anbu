@@ -145,12 +145,14 @@ export async function readAuditLines(dir: string, runId: string): Promise<AuditE
 }
 
 /** Build a real RunContext with temp evidence storage and a fake HTTP backend. */
-export async function makeRunContext(options: {
-  scope?: Scope;
-  limits?: Partial<BudgetLimits>;
-  fetchFn?: typeof fetch;
-  env?: (name: string) => string | undefined;
-} = {}): Promise<{ ctx: RunContext; dir: string }> {
+export async function makeRunContext(
+  options: {
+    scope?: Scope;
+    limits?: Partial<BudgetLimits>;
+    fetchFn?: typeof fetch;
+    env?: (name: string) => string | undefined;
+  } = {},
+): Promise<{ ctx: RunContext; dir: string }> {
   const scope = options.scope ?? makeScope();
   const dir = await mkdtemp(join(tmpdir(), "anbu-agent-ctx-"));
   const audit = new AuditLog(join(dir, "audit.log"), "run-context-test");

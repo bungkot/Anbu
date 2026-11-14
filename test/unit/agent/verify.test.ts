@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { verifyFindings } from "../../../src/agent/verify.js";
 import type { RunContext } from "../../../src/agent/context.js";
-import { securityHeadersCheck, uploadCheck } from "../../../src/tools/checks/index.js";
+import { idorCheck, securityHeadersCheck, uploadCheck } from "../../../src/tools/checks/index.js";
 import { makeFinding } from "../../../src/tools/checks/types.js";
-import type { EvidenceRef, Finding } from "../../../src/model/finding.js";
+import type { EvidenceRef, Finding, FindingCheckInput } from "../../../src/model/finding.js";
 import { loopScope, makeFetchFn, makeRecordingApproval, makeRunContext } from "./helpers.js";
 
 const HARDENED_HEADERS: Record<string, string> = {
@@ -49,6 +49,46 @@ function headerFinding(url: string, evidence: EvidenceRef[]): Finding {
     },
     evidence,
   );
+}
+
+function idorFinding(
+  url: string,
+  evidence: EvidenceRef[],
+  checkInput?: FindingCheckInput,
+): Finding {
+  return makeFinding(
+    idorCheck.metadata,
+    {
+      title: "Direct object reference became accessible with an alternate id",
+      affected: { url, parameter: "token" },
+      reproduction: [
+        `Send GET ${url} with token=xyz using the same session and inspect the response.`,
+      ],
+      remediation:
+        "Authorize every object lookup against the authenticated user's ownership; never rely on sequential or predictable ids.",
+    },
+    evidence,
+    checkInput,
+  );
+}
+
+/** A handler that only exposes the alternate object, so IDOR is reproducible. */
+function idorFetch() {
+  return makeFetchFn({
+    handler: async (rawUrl) => {
+      const url = rawUrl.toString();
+      if (url.includes("token=abc")) {
+        return new Response('{"error":"forbidden"}', {
+          status: 403,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response('{"id":"xyz","email":"victim@example.test"}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
 }
 
 test("verifyFindings confirms a finding that the originating check reproduces", async () => {
@@ -230,4 +270,83 @@ test("verifyFindings respects the reproduction budget", async () => {
   assert.equal(result[0].status, "confirmed");
   assert.equal(result[1].status, "probable");
   assert.match(result[1].verification?.reason ?? "", /budget reached/);
+});
+
+test("verifyFindings reproduces an options-based finding from its stored check input", async () => {
+  const scope = loopScope({ testClasses: ["A01"] });
+  const fetch = idorFetch();
+  const { ctx } = await makeRunContext({
+    scope,
+    fetchFn: fetch.fetchFn,
+    env: () => "test-token",
+  });
+  const url = "https://example.test/api/account?token=abc";
+  const finding = idorFinding(url, [await capture(ctx, url)], {
+    parameter: "token",
+    options: { alternates: ["xyz"] },
+  });
+
+  const result = await verifyFindings({
+    findings: [finding],
+    scope: ctx.scope,
+    store: ctx.store,
+    client: ctx.client,
+    audit: ctx.audit,
+  });
+
+  assert.equal(result[0].status, "confirmed");
+  assert.equal(result[0].verification?.attempted, true);
+  assert.ok(fetch.calls.some((call) => call.url.includes("token=xyz")));
+});
+
+test("verifyFindings cannot reproduce an options-based finding without stored input", async () => {
+  const scope = loopScope({ testClasses: ["A01"] });
+  const fetch = idorFetch();
+  const { ctx } = await makeRunContext({
+    scope,
+    fetchFn: fetch.fetchFn,
+    env: () => "test-token",
+  });
+  const url = "https://example.test/api/account?token=abc";
+  const finding = idorFinding(url, [await capture(ctx, url)]);
+
+  const result = await verifyFindings({
+    findings: [finding],
+    scope: ctx.scope,
+    store: ctx.store,
+    client: ctx.client,
+    audit: ctx.audit,
+  });
+
+  assert.equal(result[0].status, "discarded");
+  assert.match(result[0].verification?.reason ?? "", /did not reproduce/);
+});
+
+test("verifyFindings keeps a finding whose stored input was redacted probable", async () => {
+  const scope = loopScope({ testClasses: ["A01"] });
+  const fetch = makeFetchFn();
+  const { ctx } = await makeRunContext({
+    scope,
+    fetchFn: fetch.fetchFn,
+    env: () => "test-token",
+  });
+  const url = "https://example.test/api/account?token=abc";
+  const finding = idorFinding(url, [await capture(ctx, url)], {
+    parameter: "token",
+    options: { alternates: ["[REDACTED]"] },
+    redacted: true,
+  });
+
+  const result = await verifyFindings({
+    findings: [finding],
+    scope: ctx.scope,
+    store: ctx.store,
+    client: ctx.client,
+    audit: ctx.audit,
+  });
+
+  assert.equal(result[0].status, "probable");
+  assert.equal(result[0].verification?.attempted, false);
+  assert.match(result[0].verification?.reason ?? "", /redacted/);
+  assert.equal(fetch.calls.length, 0);
 });

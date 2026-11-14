@@ -29,6 +29,24 @@ export interface Affected {
   endpoint?: string;
 }
 
+/**
+ * Closed check input retained for reproduction. Secrets are redacted before
+ * the input is stored on a finding, so a finding can be replayed without
+ * persisting credentials or tokens.
+ */
+export interface FindingCheckInput {
+  method?: string;
+  parameter?: string;
+  body?: string;
+  options?: Record<string, unknown>;
+  /**
+   * True when redaction changed a stored value. A redacted input cannot be
+   * replayed faithfully, so verification leaves the finding probable instead
+   * of reporting a false negative.
+   */
+  redacted?: boolean;
+}
+
 export interface Finding {
   id: string;
   category: OwaspCategory;
@@ -38,6 +56,12 @@ export interface Finding {
   status: FindingStatus;
   /** Stable id of the deterministic check that produced the finding. */
   checkId?: string;
+  /**
+   * Sanitized closed input of the originating check, retained so verification
+   * can replay options-based checks. Absent on findings created before this
+   * field existed or by callers that build findings directly.
+   */
+  checkInput?: FindingCheckInput;
   title: string;
   affected: Affected;
   evidence: EvidenceRef[];

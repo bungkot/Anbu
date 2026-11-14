@@ -30,7 +30,8 @@ test("renderSarif emits a valid 2.1.0 log with only reported findings", () => {
   assert.equal(sarif.runs[0].results.length, 2);
   assert.ok(
     sarif.runs[0].results.every(
-      (result) => result.properties.status === "confirmed" || result.properties.status === "probable",
+      (result) =>
+        result.properties.status === "confirmed" || result.properties.status === "probable",
     ),
   );
   assert.equal(sarif.runs[0].tool.driver.rules.length, 2);
@@ -51,7 +52,9 @@ test("renderSarif maps informational severity to none and includes discarded on 
   const sarif = JSON.parse(renderSarif(informational)) as SarifLog;
   assert.equal(sarif.runs[0].results[0].level, "none");
 
-  const withDiscarded = JSON.parse(renderSarif(makeReport(), { includeDiscarded: true })) as SarifLog;
+  const withDiscarded = JSON.parse(
+    renderSarif(makeReport(), { includeDiscarded: true }),
+  ) as SarifLog;
   assert.equal(withDiscarded.runs[0].results.length, 3);
 });
 

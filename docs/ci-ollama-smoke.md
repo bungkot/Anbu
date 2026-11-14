@@ -9,6 +9,22 @@ The workflow is staged so a slow or flaky model does not hide the deterministic
 guarantees. A manual run can stop at any stage; the weekly schedule runs all
 three.
 
+## Triggering
+
+This workflow **does not run on push**. A green `CI` run only covers
+typechecking, linting, build, tests, audit, and SBOM; it does not download or
+call Ollama.
+
+To run the model stages:
+
+1. Open **Actions → Ollama staged model tests**.
+2. Choose **Run workflow**.
+3. Select the deepest stage (`smoke`, `deterministic`, or `model`) and start it.
+
+The first run downloads the Ollama archive and the 4.9 GB model, so expect
+several minutes before the first model step appears. The weekly schedule runs
+the `model` stage automatically.
+
 | Stage | What runs | Blocking? |
 | --- | --- | --- |
 | 1. Smoke | `doctor`, direct Ollama benchmark, `ask` through the OpenCode SDK | Yes |
@@ -86,14 +102,16 @@ remaining installation with `ollama --version`.
 3. Download and checksum the pinned Ollama archive, install it under
    `/usr/local`, and strip GPU payloads.
 4. Start `ollama serve`, wait for `/api/tags`, then pull `dolphin3:8b`.
-5. Put `node_modules/.bin` on `PATH` so the embedded OpenCode server can find
+5. Print `ollama list`, `ollama show`, and later `ollama ps` so the loaded
+   model and its metadata are visible in the job log.
+6. Put `node_modules/.bin` on `PATH` so the embedded OpenCode server can find
    the local `opencode` CLI (with a pinned global install as fallback).
-6. Run `doctor`.
-7. Stage 1: benchmark `/api/generate`, then `ask`.
-8. Stage 2: start Juice Shop, validate scope, then `pentest --no-model`.
-9. Stage 3: run `pentest` with the planner; the scope caps it at two model
-   turns.
-10. Render the stage summary, upload evidence and metrics, and always stop
+7. Run `doctor`.
+8. Stage 1: benchmark `/api/generate`, then `ask`.
+9. Stage 2: start Juice Shop, validate scope, then `pentest --no-model`.
+10. Stage 3: run `pentest` with the planner; the scope caps it at two model
+    turns. Print a compact model-assisted/stop-reason/turn summary to the log.
+11. Render the stage summary, upload evidence and metrics, and always stop
     Juice Shop and Ollama.
 
 ## Scope and authorization

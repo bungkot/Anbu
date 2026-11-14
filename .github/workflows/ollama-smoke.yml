@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   ollama-stages:
-    name: Ollama staged tests
+    name: Ollama model stages (dolphin3:8b)
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
@@ -121,6 +121,11 @@ jobs:
           ollama pull "$OLLAMA_MODEL"
           ollama list
 
+      - name: Show model info
+        run: |
+          ollama list
+          ollama show "$OLLAMA_MODEL"
+
       - name: Add local OpenCode CLI to PATH
         run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
@@ -173,6 +178,9 @@ jobs:
           grep -qi "ok" "$RUNNER_TEMP/ask.txt" || status=1
           exit "$status"
 
+      - name: Show loaded model
+        run: ollama ps
+
       - name: Stage 2 - Start Juice Shop
         if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
         run: |
@@ -201,7 +209,7 @@ jobs:
         if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
         run: node dist/index.js intake --scope scope/ci-juice-shop.json
 
-      - name: Stage 2 - Deterministic pentest
+      - name: Stage 2 - Deterministic pentest (no model)
         id: deterministic
         if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
         run: |
@@ -237,6 +245,10 @@ jobs:
           end=$(date +%s%3N)
           node scripts/ci-metrics.mjs timing "$metrics/model-seconds.json" "$((end - start))"
           exit "$status"
+
+      - name: Stage 3 - Show model result
+        if: always() && env.STAGE == 'model' && steps.model.outcome != 'skipped'
+        run: node scripts/ci-metrics.mjs result "$RUNNER_TEMP/metrics/model-pentest.json"
 
       - name: Publish stage summary
         if: always()

@@ -5,6 +5,7 @@
  *   node scripts/ci-metrics.mjs benchmark <ollama-response.json> <out.json> <wall-ms>
  *   node scripts/ci-metrics.mjs timing <out.json> <wall-ms>
  *   node scripts/ci-metrics.mjs summary <metrics-dir>
+ *   node scripts/ci-metrics.mjs result <pentest-report.json>
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -55,6 +56,28 @@ function timing([outPath, wallMs]) {
     throw new Error("timing requires <out.json> <wall-ms>");
   }
   writeFileSync(outPath, `${JSON.stringify({ seconds: round(Number(wallMs) / 1000) }, null, 2)}\n`);
+}
+
+function result([reportPath]) {
+  if (reportPath === undefined) throw new Error("result requires <pentest-report.json>");
+  let report;
+  try {
+    report = readJson(reportPath);
+  } catch {
+    console.log(
+      "No pentest report was produced; the stage failed or timed out before writing one.",
+    );
+    return;
+  }
+  const budgets = report.budgets ?? {};
+  const findings = report.summary ?? {};
+  console.log(`Model-assisted : ${report.methodology?.modelAssisted === true}`);
+  console.log(`Stop reason    : ${report.stopReason ?? "unknown"}`);
+  console.log(`Model turns    : ${budgets.usedModelTurns ?? "?"}/${budgets.maxModelTurns ?? "?"}`);
+  console.log(`Requests       : ${budgets.usedRequests ?? "?"}/${budgets.maxRequests ?? "?"}`);
+  console.log(
+    `Findings       : ${findings.reported ?? 0} reported, ${findings.discarded ?? 0} withheld`,
+  );
 }
 
 function number(value) {
@@ -140,7 +163,8 @@ try {
   if (command === "benchmark") benchmark(args);
   else if (command === "timing") timing(args);
   else if (command === "summary") summary(args);
-  else throw new Error("expected one of: benchmark | timing | summary");
+  else if (command === "result") result(args);
+  else throw new Error("expected one of: benchmark | timing | summary | result");
 } catch (err) {
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);

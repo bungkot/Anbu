@@ -1,89 +1,133 @@
-# Informan
+# Anbu
 
-[![CI](https://github.com/bungkot/Informan/actions/workflows/ci.yml/badge.svg)](https://github.com/bungkot/Informan/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**Agentic web security pentester** — a TypeScript engine that runs a bounded
+agent loop over an authorized target and maps findings to the
+[OWASP Top 10:2025](https://owasp.org/Top10/2025/).
 
-A TypeScript project that embeds the **OpenCode SDK** with **Ollama** running in
-**Docker Desktop** (VM memory > 3 GiB). Ask a local LLM from your terminal with
-`npm run ask` — no cloud API keys required.
+Anbu combines deterministic, auditable security checks with LLM-guided
+reasoning. It is a defensive security tool: it only tests systems you are
+explicitly authorized to test, captures evidence for every finding, and keeps a
+human in the loop for anything state-changing or destructive.
 
-For development, this repository provides instructions, custom agents, and
-**GitHub Copilot** prompts in `.github/`.
+> **Authorization is mandatory.** Do not run Anbu against any host, range, or
+> application without written permission from the asset owner. See
+> [`docs/scope-and-authorization.md`](docs/scope-and-authorization.md).
+
+## Project status
+
+Anbu is in the scaffolding phase (M0). The repository already builds and runs
+the local Ollama/OpenCode integration:
+
+- `npm run doctor` — verifies Docker, Ollama, and the pinned model.
+- `npm run ask -- "..."` — sends a prompt to the local model through the
+  embedded OpenCode SDK.
+
+The agentic pentest engine (scope intake, guardrails, tool layer, OWASP checks,
+loop, evidence store, and reports) is planned and tracked in
+[`ROADMAP.md`](ROADMAP.md). Until then, the `pentest`, `recon`, and `report`
+commands do not exist yet.
+
+## How it works
+
+```text
+authorized scope
+      │
+      ▼
+┌─────────────┐   ┌──────────────┐   ┌─────────────┐
+│  recon      │──▶│  plan        │──▶│  execute    │
+│  endpoints, │   │  select      │   │  guarded    │
+│  forms,     │   │  OWASP checks│   │  HTTP tools │
+│  tech stack │   │  (A01-A10)   │   │  + checks   │
+└─────────────┘   └──────────────┘   └──────┬──────┘
+                                           │
+      ┌─────────────┐   ┌──────────────┐   │
+      │  report     │◀──│  verify      │◀──┘
+      │  Markdown / │   │  reproduce,  │
+      │  JSON/SARIF │   │  kill FPs    │
+      └─────────────┘   └──────────────┘
+```
+
+The loop is bounded by request, time, finding, and model-step budgets. Target
+responses are always treated as untrusted data, never as instructions.
+
+## OWASP Top 10:2025 coverage
+
+| ID | Category |
+|---|---|
+| A01 | Broken Access Control |
+| A02 | Security Misconfiguration |
+| A03 | Software Supply Chain Failures |
+| A04 | Cryptographic Failures |
+| A05 | Injection |
+| A06 | Insecure Design |
+| A07 | Authentication Failures |
+| A08 | Software or Data Integrity Failures |
+| A09 | Security Logging and Alerting Failures |
+| A10 | Mishandling of Exceptional Conditions |
 
 ## Prerequisites
-- Docker Desktop (Compose v2), VM memory **> 3 GiB** (6-8 GiB recommended)
+- Docker Desktop (Compose v2), VM memory >= 3 GiB
 - Node.js >= 20 (optional when using the dev container)
-- Git
+- An Ollama model for LLM-guided reasoning (local, no cloud API key required)
+- A written authorization and a scope file for the target
 
-## Quick start (fresh machine)
+## Quick start
+
 ```bash
-git clone https://github.com/bungkot/Informan.git && cd Informan
-./scripts/bootstrap.sh      # check memory, create .env, start Ollama, pull model
+git clone <repo> && cd anbu
+./scripts/bootstrap.sh          # Docker memory check, .env, Ollama, model pull
 npm install
-npm run doctor              # verify Ollama + model
-npm run ask -- "Write a TypeScript function to validate email"
+npm run doctor                  # verify Ollama + model
+npm run ask -- "Hello"          # try the local model through the OpenCode SDK
 ```
 
-Example session:
-```text
-$ npm run doctor
-Ollama root : http://localhost:11434
-Base URL    : http://localhost:11434
-Model       : qwen3.5:2b-q4_K_M
-Models      : qwen3.5:2b-q4_K_M
-OK: Ollama is ready and the model is available.
+Running a real assessment requires the planned `pentest` command (M4 in
+[`ROADMAP.md`](ROADMAP.md)):
 
-$ npm run ask -- "Write a TypeScript function to validate email"
-Here is a TypeScript function to validate an email address:
-
-export function isValidEmail(email: string): boolean {
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return pattern.test(email);
-}
-```
-(Output varies by model; run it on your machine to see the live result.)
-
-Without Node on the host:
 ```bash
-docker compose --profile app run --rm --build app ask "Hello"
+npm run pentest -- --scope scope/example.json
 ```
 
-## Development modes
-| Mode | Command |
-|---|---|
-| On host (Node + Ollama in Docker) | `npm run dev -- doctor` |
-| Dev container | `npm run stack:dev` then `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec dev bash` |
-| VS Code Dev Containers | "Reopen in Container" |
+The scope file declares the targets, allowed test classes, rate limits, and the
+authorization reference. Without a valid scope, the engine refuses to start.
 
-In VS Code, GitHub Copilot reads `.github/copilot-instructions.md`.
-Custom agents are available in `.github/agents/` and project prompts in
-`.github/prompts/`; see the [harness documentation](docs/copilot-harness.md).
+## Run in Docker
+
+The repository uses a single `docker-compose.yml` (Ollama + one app/dev service)
+and a single `Dockerfile`. The default model is `granite3.3:2b` (1.5 GB Q4,
+native function calling), sized for a 3 GB Docker Desktop VM.
+
+```bash
+npm run stack:build
+npm run stack:up
+docker compose exec app npm run doctor
+npm run stack:ask -- "Hello"
+```
+
+Or open the folder in VS Code and use **Dev Containers: Reopen in Container**.
+The repository is mounted at `/workspace`, `npm install` runs automatically, and
+the dev container pins `OLLAMA_MODEL=granite3.3:2b` and pulls the model on first
+setup (see `.devcontainer/devcontainer.json` and
+`scripts/devcontainer-setup.sh`). The dev container reuses the single
+`docker-compose.yml` and `Dockerfile`; there is no separate container setup.
 
 ## Documentation
+- [Roadmap](ROADMAP.md)
 - [Architecture](docs/architecture.md)
-- [Setup on another machine](docs/setup-other-machine.md)
-- [GitHub Copilot harness](docs/copilot-harness.md)
-- [Model and memory sizing](docs/memory-sizing.md)
+- [Agentic loop](docs/agentic-loop.md)
+- [OWASP Top 10:2025 methodology](docs/methodology-owasp-top10-2025.md)
+- [Scope and authorization](docs/scope-and-authorization.md)
+- [Threat model](docs/threat-model.md)
+- [Tool reference](docs/tool-reference.md)
+- [Verification](docs/verification.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
-## Verification status
-- **Pinned toolchain**: the OpenCode SDK and CLI are pinned to a compatible
-  version, 1.19.5. The CLI is installed as a project dependency so that
-  `npm run ask` does not accidentally use a different global version; the app
-  image uses the same local CLI.
-- **Tested models** (Q4 quantization, 8192 context — estimates from
-  [memory sizing](docs/memory-sizing.md); measure on your own with `docker stats`):
-
-  | Model | Estimated RAM | Docker VM minimum | Notes |
-  |---|---|---|---|
-  | `qwen3.5:2b-q4_K_M` | 2-3 GiB | 3-4 GiB | Default; native tool calling + thinking |
-  | `qwen3.5:0.8b` | 1-2 GiB | 3 GiB | Fallback for very tight memory |
-  | `qwen3.5:4b` | 4-5 GiB | 6 GiB | Does not fit within the 3g cap |
-  | `qwen3.5:9b` | 7-8 GiB | 9 GiB | Needs a much larger Docker VM |
-
-- **Memory guardrails**: the default stack is capped at 3 GiB — Ollama
-  `mem_limit=2g` (the model fits inside it) + dev/app `mem_limit=1g`.
-  `npm run doctor` verifies Ollama health and model availability before use.
+## Development
+OpenCode loads `AGENTS.md` plus the agents, skills, and commands under
+`.opencode/`. Start with the `architect` agent for design work and the
+`pentester` agent for implementation. There are 10 OWASP Top 10:2025 category
+skills and 10 matching category agents (`a01`-`a10`), plus the cross-cutting
+`owasp-top10-2025` overview and `recon-and-scope` skills.
 
 ## License
 [MIT](LICENSE)

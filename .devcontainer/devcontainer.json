@@ -1,11 +1,20 @@
 {
-  "name": "informan",
-  "dockerComposeFile": ["../docker-compose.yml", "../docker-compose.dev.yml"],
-  "service": "dev",
-  "runServices": ["ollama", "dev"],
+  "name": "anbu",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "runServices": ["ollama", "app"],
   "workspaceFolder": "/workspace",
   "remoteUser": "node",
-  "postCreateCommand": "npm install",
+  "containerEnv": {
+    "OLLAMA_BASE_URL": "http://ollama:11434/v1",
+    "OLLAMA_MODEL": "granite3.3:2b"
+  },
+  "remoteEnv": {
+    "OLLAMA_BASE_URL": "http://ollama:11434/v1",
+    "OLLAMA_MODEL": "granite3.3:2b"
+  },
+  "postCreateCommand": "bash scripts/devcontainer-setup.sh",
+  "updateContentCommand": "npm install",
   "customizations": {
     "vscode": {
       "extensions": ["ms-azuretools.vscode-docker"]

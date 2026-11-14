@@ -4,13 +4,8 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends git curl ca-certificates ripgrep \
  && rm -rf /var/lib/apt/lists/* \
  && git config --system --add safe.directory '*'
-
-# ---- dev: used for development (devcontainer / docker-compose.dev.yml)
-FROM base AS dev
+# OpenCode CLI is required by the embedded SDK; pin it to match the SDK.
 RUN npm install -g opencode-ai@1.19.5
-WORKDIR /workspace
-USER node
-CMD ["sleep", "infinity"]
 
 # ---- build
 FROM base AS build
@@ -21,7 +16,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-# ---- runtime
+# ---- runtime (also used for the dev container; source is mounted at /workspace)
 FROM base AS runtime
 WORKDIR /app
 COPY package*.json ./

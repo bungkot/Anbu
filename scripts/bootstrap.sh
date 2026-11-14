@@ -16,12 +16,12 @@ if [ "$mem_mib" -le 3072 ]; then
   echo "ERROR: Docker Desktop memory <= 3 GiB. Increase it in Settings > Resources > Memory (6-8 GiB recommended)."
   exit 1
 elif [ "$mem_mib" -lt 5120 ]; then
-  echo "WARNING: < 5 GiB. Use a small model (qwen3.5:2b-q4_K_M) and OLLAMA_MEM_LIMIT=3g."
+  echo "WARNING: < 5 GiB. Use granite3.3:2b and keep OLLAMA_MEM_LIMIT=2g."
 fi
 
 [ -f .env ] || { cp .env.example .env; echo "Created .env from .env.example"; }
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
-MODEL="${OLLAMA_MODEL:-qwen3.5:2b-q4_K_M}"
+MODEL="${OLLAMA_MODEL:-granite3.3:2b}"
 
 echo "Starting stack..."
 docker compose up -d

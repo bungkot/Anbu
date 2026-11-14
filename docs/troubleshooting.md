@@ -1,14 +1,25 @@
 # Troubleshooting
 
-| Symptom | Common cause | Fix |
+| Symptom | Likely cause | Fix |
 |---|---|---|
-| `bootstrap.sh`: memory <= 3 GiB | Docker Desktop limit | Settings > Resources > Memory |
-| `Ollama is not responding` | Stack not running | `docker compose up -d`, check `docker compose logs ollama` |
-| `Model ... is not available` | Model not pulled | `docker compose exec ollama ollama pull <model>` |
-| `Timeout waiting for server to start` | Global CLI version mismatches the SDK | Run via `npm run ask` to use the project CLI; in Docker, rebuild the app image |
-| Connection refused to `localhost:11434` from a container | Wrong host | Inside containers use `http://ollama:11434/v1` |
-| Port 4096 in use | Another OpenCode server is running | Set `OPENCODE_PORT` |
-| Response hangs | Proxy blocking SSE, or model too slow | Access Ollama directly without a proxy; check `docker stats` |
-| Agent calls tools incorrectly | Model too small | Use `qwen3.5:4b` or larger |
-| `OOMKilled` | Not enough RAM | See `memory-sizing.md` |
-| `git: dubious ownership` in the container | Different mount UID | Already handled via `safe.directory` in the Dockerfile |
+| `Refusing to start: authorization` | Scope missing, expired, or token unresolved | Check `scope/example.json` (or your scope file), validity window, and `ANBU_AUTH_TOKEN`. |
+| `Refusing to start: no targets` | Empty `targets` array or all denied | Add an allowed target and path. |
+| `Request blocked: out of scope` | Host/path/port/method not in `targets`, or matched `deny` | Fix the URL or update the scope; deny always wins. |
+| `Request blocked: rate limit` | Too many requests to one host | Lower `requestsPerSecondPerHost` or raise the budget. |
+| `Ollama is not responding` | Stack not running or wrong base URL | `docker compose up -d`; run `npm run doctor`. |
+| `Model is not available` | Model not pulled | `docker compose exec ollama ollama pull <model>`. |
+| LLM returns invalid JSON | Model too small or prompt too long | Use a larger model, shorten context, or rely on deterministic checks. |
+| Target response hangs | Proxy blocking SSE/streaming, or slow model | Access Ollama directly; check `docker stats`; raise timeouts. |
+| Too many false positives | Weak payloads or missing baseline | Compare against baseline; tune/disable the check; raise confidence threshold. |
+| No findings on a vulnerable fixture | Check not implemented or category out of scope | Confirm `testClasses`; run the check's unit tests. |
+| Evidence directory grows quickly | Large bodies or many requests | Lower `maxBodyBytes` and `maxRequests`; prune old runs. |
+| `docker: dubious ownership` in dev container | Mount UID mismatch | Already handled via `safe.directory` in the Dockerfile. |
+| Port 4096 in use | Another OpenCode server | Set `OPENCODE_PORT` or stop the other server. |
+
+## Getting help
+
+1. Run `npm run doctor` and include the output.
+2. Re-run the failing command with debug logging enabled.
+3. Check the audit log for guardrail decisions.
+4. Include the run ID, scope reference (not the token), and finding ID when
+   reporting an issue.

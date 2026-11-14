@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "name": "Example authorized assessment (replace before use)",
+  "authorization": {
+    "reference": "EXAMPLE-2026-001",
+    "owner": "Example Corp security team",
+    "issuedBy": "CISO Office",
+    "validFrom": "2026-01-01T00:00:00Z",
+    "validUntil": "2026-12-31T23:59:59Z",
+    "token": "env:ANBU_AUTH_TOKEN"
+  },
+  "targets": [
+    {
+      "host": "test.example.com",
+      "scheme": "https",
+      "port": 443,
+      "paths": ["/app", "/api"],
+      "methods": ["GET", "HEAD", "OPTIONS", "POST"]
+    }
+  ],
+  "deny": [
+    { "host": "*.example.com", "paths": ["/admin/delete", "/internal"] },
+    { "cidr": "10.0.0.0/8" }
+  ],
+  "testClasses": ["A01", "A02", "A04", "A05", "A07", "A10"],
+  "readOnly": true,
+  "stateChanging": {
+    "mode": "approve",
+    "allow": []
+  },
+  "policy": {
+    "maxRequests": 800,
+    "maxDurationMinutes": 60,
+    "maxConcurrentPerHost": 2,
+    "requestsPerSecondPerHost": 5,
+    "maxBodyBytes": 65536,
+    "maxRedirects": 3,
+    "followExternalRedirects": false
+  }
+}

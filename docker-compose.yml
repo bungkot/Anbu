@@ -12,7 +12,7 @@ services:
       OLLAMA_KV_CACHE_TYPE: q8_0      # 8-bit KV cache (requires flash attention)
     volumes:
       - ollama:/root/.ollama
-    mem_limit: ${OLLAMA_MEM_LIMIT:-2.5g}
+    mem_limit: ${OLLAMA_MEM_LIMIT:-2g}
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -20,21 +20,33 @@ services:
       retries: 12
     restart: unless-stopped
 
-  # TypeScript application (profile "app"): docker compose --profile app run --rm app ask "..."
+  # Single application/dev service. The image contains Node, the OpenCode CLI,
+  # and the built app; the repository is mounted at /workspace for development.
   app:
     build:
       context: .
       target: runtime
-    profiles: ["app"]
     depends_on:
       ollama:
         condition: service_healthy
     environment:
       OLLAMA_BASE_URL: http://ollama:11434/v1
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:2b-q4_K_M}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-granite3.3:2b}
+      ANBU_SCOPE_FILE: ${ANBU_SCOPE_FILE:-scope/example.json}
+      ANBU_EVIDENCE_DIR: ${ANBU_EVIDENCE_DIR:-workspace/evidence}
+      ANBU_AUTH_TOKEN: ${ANBU_AUTH_TOKEN:-}
+      ANBU_MAX_REQUESTS: ${ANBU_MAX_REQUESTS:-800}
+      ANBU_MAX_DURATION_MINUTES: ${ANBU_MAX_DURATION_MINUTES:-60}
+      ANBU_REQUESTS_PER_SECOND_PER_HOST: ${ANBU_REQUESTS_PER_SECOND_PER_HOST:-5}
+      ANBU_READ_ONLY: ${ANBU_READ_ONLY:-true}
     volumes:
-      - ./workspace:/workspace
-    mem_limit: ${APP_MEM_LIMIT:-1.5g}
+      - .:/workspace:cached
+    working_dir: /workspace
+    mem_limit: ${APP_MEM_LIMIT:-0.75g}
+    # Keep the container alive for the dev container and interactive exec.
+    # One-off runs override the entrypoint:
+    #   docker compose run --rm --entrypoint node app /app/dist/index.js ask "..."
+    entrypoint: ["sleep", "infinity"]
 
 volumes:
   ollama:

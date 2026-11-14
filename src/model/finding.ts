@@ -29,4 +29,6 @@ export interface Finding {
   reproduction: string[];
   remediation: string;
   falsePositiveAnalysis?: string;
+  /** Extra deterministic detail (matched markers, versions, headers). */
+  details?: string;
 }

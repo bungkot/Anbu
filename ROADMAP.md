@@ -89,19 +89,24 @@ Goal: high-signal checks that do not depend on the LLM.
 
 Deliverables:
 
-- `src/tools/checks/` with one file per area, registered in `index.ts`.
-- Checks from `docs/tool-reference.md`: security headers, TLS, password hash,
-  SQLi, XSS, command injection, XXE, path traversal, IDOR, force browsing, CORS,
-  JWT, authorization methods, default credentials, error handling, logging,
-  dependencies, deserialization, upload, and rate limit.
-- Unit fixtures: a vulnerable and a safe variant per check.
+- [x] `src/tools/checks/` with one file per area, registered in `index.ts`.
+- [x] Checks from `docs/tool-reference.md`: security headers, TLS, password hash,
+      SQLi, XSS, command injection, XXE, path traversal, IDOR, force browsing, CORS,
+      JWT, authorization methods, default credentials, error handling, logging,
+      dependencies, deserialization, upload, and rate limit.
+- [x] Unit fixtures: a vulnerable and a safe variant per check.
 
 Exit criteria:
 
-- Each check detects its vulnerable fixture and ignores the safe one.
-- False-positive rate below 10% on the fixture suite.
-- Checks declare read-only vs state-changing; state-changing checks require
-  approval.
+- [x] Each check detects its vulnerable fixture and ignores the safe one.
+- [x] False-positive rate below 10% on the fixture suite (safe fixtures produce
+      no findings).
+- [x] Checks declare read-only vs state-changing; state-changing checks require
+      approval.
+
+Status: complete. 20 deterministic checks are registered in
+`src/tools/checks/index.ts`; 141 unit tests pass; `npm run typecheck`,
+`npm run lint`, and `npm run build` are clean.
 
 ## M4 — Agentic loop and planner
 

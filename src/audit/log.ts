@@ -8,6 +8,12 @@ export interface AuditDetails {
   method?: string;
   target?: string;
   evidenceId?: string;
+  /** Deterministic check that produced the entry. */
+  check?: string;
+  /** Number of findings the check produced. */
+  findings?: number;
+  /** Number of HTTP requests the check issued. */
+  requests?: number;
 }
 
 export interface AuditEntry {

@@ -3,9 +3,10 @@
 Verification covers two things: the correctness of Anbu's code, and the
 quality of its findings.
 
-> Status: unit tests are implemented and run with `npm run test`. Integration,
-> target, and report suites plus `npm run pentest` are planned; see
-> `ROADMAP.md`.
+> Status: unit tests are implemented and run with `npm run test`, including a
+> vulnerable and a safe fixture for every deterministic check under
+> `test/unit/checks/`. Integration, target, and report suites plus
+> `npm run pentest` are planned; see `ROADMAP.md`.
 
 ## 1. Levels
 

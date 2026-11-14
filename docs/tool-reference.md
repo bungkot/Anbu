@@ -6,8 +6,11 @@ closed schema and cannot invent tools or bypass arguments.
 
 > Status: `http_request`, `crawl`, `capture_evidence`, `compare_evidence`, and
 > `parse_response` are implemented in `src/tools/` and `src/store/` (M2) and are
-> exercised by `npm run recon` and the unit suite. The closed agent-facing
-> schemas and the remaining tools arrive with M3/M4; see `ROADMAP.md`.
+> exercised by `npm run recon` and the unit suite. The deterministic checks in
+> the table below are implemented in `src/tools/checks/` and registered in
+> `src/tools/checks/index.ts` (M3); each has vulnerable and safe fixtures under
+> `test/unit/checks/`. The closed agent-facing schemas and the remaining
+> model-guided tools arrive with M4; see `ROADMAP.md`.
 
 ## Common result shape
 

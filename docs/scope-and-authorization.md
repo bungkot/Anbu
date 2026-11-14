@@ -140,3 +140,16 @@ The audit log records, at minimum:
 - Budget consumption and stop reason.
 
 The audit log is tamper-evident (append-only) and is shipped with the report.
+
+## 9. Intake command
+
+Validate a scope document and its authorization before a run:
+
+```bash
+npm run intake -- --scope scope/example.json
+```
+
+`ANBU_SCOPE_FILE` is used when `--scope` is omitted. On success the command
+prints the accepted targets, test classes, read-only flag, and authorization
+reference. On failure it prints one bullet per reason and exits with code 1.
+It performs no network I/O.

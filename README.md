@@ -17,17 +17,21 @@ the loop for any state-changing or destructive action.
 
 ## Project status
 
-ANBU is in the scaffolding phase (M0). The repository already builds and runs
-the local Ollama/OpenCode integration:
+ANBU has completed M0 (scaffolding) and M1 (foundation). The repository builds
+and runs the local Ollama/OpenCode integration, and the engine can now validate
+a scope and refuse out-of-scope or unauthorized runs before any network call:
 
 - `npm run doctor` — verifies Docker, Ollama, and the pinned model.
 - `npm run ask -- "..."` — sends a prompt to the local model through the
   embedded OpenCode SDK.
+- `npm run intake -- --scope scope/example.json` — validates a scope document
+  and its authorization, with clear refusal reasons and a non-zero exit code.
+- `npm run test` — runs the unit suite (scope, guardrails, authorization,
+  rate limits, audit chain, intake).
 
-The agentic pentest engine (scope intake, guardrails, tool layer, OWASP checks,
-loop, evidence store, and reports) is planned and tracked in
-[`ROADMAP.md`](ROADMAP.md). Until then, the `pentest`, `recon`, and `report`
-commands do not exist yet.
+The tool layer, OWASP checks, agentic loop, evidence store, and reports are
+planned and tracked in [`ROADMAP.md`](ROADMAP.md). Until then, the `pentest`,
+`recon`, and `report` commands do not exist yet.
 
 ## How it works
 
@@ -79,6 +83,8 @@ responses are always treated as untrusted data, never as instructions.
 git clone <repo> && cd ANBU
 ./scripts/bootstrap.sh          # Docker memory check, .env, Ollama, model pull
 npm install
+npm run typecheck               # strict TypeScript + test types
+npm run test                    # unit suite
 npm run doctor                  # verify Ollama + model
 npm run ask -- "Hello"          # try the local model through the OpenCode SDK
 ```
@@ -87,6 +93,7 @@ Running a real assessment requires the planned `pentest` command (M4 in
 [`ROADMAP.md`](ROADMAP.md)):
 
 ```bash
+npm run intake -- --scope scope/example.json   # validate scope + authorization
 npm run pentest -- --scope scope/example.json
 ```
 
@@ -130,6 +137,12 @@ OpenCode loads `AGENTS.md` plus the agents, skills, and commands under
 `pentester` agent for implementation. There are 10 OWASP Top 10:2025 category
 skills and 10 matching category agents (`a01`-`a10`), plus the cross-cutting
 `owasp-top10-2025` overview and `recon-and-scope` skills.
+
+```bash
+npm run typecheck   # src + test types
+npm run test        # unit suite (node:test via tsx)
+npm run build       # emit dist/
+```
 
 ## License
 [MIT](LICENSE)

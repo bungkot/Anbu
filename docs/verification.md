@@ -3,8 +3,9 @@
 Verification covers two things: the correctness of Anbu's code, and the
 quality of its findings.
 
-> Status: target verification process. `npm run test` and `npm run pentest` are
-> planned; see `ROADMAP.md`.
+> Status: unit tests are implemented and run with `npm run test`. Integration,
+> target, and report suites plus `npm run pentest` are planned; see
+> `ROADMAP.md`.
 
 ## 1. Levels
 
@@ -66,6 +67,10 @@ At minimum, prove:
 - State-changing request requires approval.
 - Rate limit and request budget are enforced.
 - Credentials and tokens never appear in logs, evidence, or prompts.
+
+M1 implements the first six in `test/unit` (`scope.test.ts`, `policy.test.ts`,
+`authorization.test.ts`, `rate-limit.test.ts`, `intake.test.ts`). Redirect,
+credential-redaction, and evidence tests arrive with M2.
 
 ## 6. Finding quality metrics
 

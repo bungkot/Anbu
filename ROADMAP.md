@@ -20,7 +20,7 @@ Status legend: `[x]` done · `[~]` in progress · `[ ]` planned
 | M6 | End-to-end validation | Fixture baselines, CI, SBOM | Guardrail tests and baselines pass |
 | M7 | v1.0 release | Docs match implementation | All release gates pass |
 
-## M0 — Scaffolding (current)
+## M0 — Scaffolding
 
 - [x] Repository, TypeScript ESM strict build, Docker Compose (Ollama + app/dev).
 - [x] `src/config.ts`, `src/health.ts`, `src/opencode.ts`, `src/index.ts` with
@@ -39,19 +39,23 @@ request exists.
 
 Deliverables:
 
-- `src/model/scope.ts`, `src/model/finding.ts`, `src/model/report.ts`.
-- `src/guardrails/scope.ts`, `authorization.ts`, `policy.ts`, `rate-limit.ts`.
-- `src/config.ts` reads the `ANBU_*` variables documented in `.env.example`.
-- Append-only, hash-chained audit log.
-- `intake` validation with clear refusal reasons.
+- [x] `src/model/scope.ts`, `src/model/finding.ts`, `src/model/report.ts`.
+- [x] `src/guardrails/scope.ts`, `authorization.ts`, `policy.ts`, `rate-limit.ts`.
+- [x] `src/config.ts` reads the `ANBU_*` variables documented in `.env.example`.
+- [x] `src/audit/log.ts`: append-only, hash-chained audit log.
+- [x] `src/intake.ts` and the `intake` CLI: validation with clear refusal reasons.
+- [x] Unit tests under `test/unit` (`npm run test`).
 
 Exit criteria:
 
-- Unit tests prove out-of-scope, denied, and expired-authorization requests are
+- [x] Unit tests prove out-of-scope, denied, and expired-authorization requests are
   blocked before any network call.
-- `npm run doctor` still passes; typecheck and build are clean.
+- [x] `npm run doctor` still passes; typecheck and build are clean.
 
-## M2 — Tool layer and evidence
+Status: complete. 41 unit tests pass; `npm run typecheck` and `npm run build`
+are clean.
+
+## M2 — Tool layer and evidence (current)
 
 Goal: a guarded HTTP client and a local evidence store.
 

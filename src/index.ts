@@ -1,6 +1,7 @@
 import { config, ollamaRoot } from "./config.js";
 import { ensureModel, listModels, waitForOllama } from "./health.js";
 import { startOpencode } from "./opencode.js";
+import { intake } from "./intake.js";
 
 async function doctor(): Promise<void> {
   console.log(`Ollama root : ${ollamaRoot()}`);
@@ -48,6 +49,46 @@ async function ask(prompt: string): Promise<void> {
   }
 }
 
+function parseScopeArg(args: string[]): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--scope" && args[i + 1] !== undefined) return args[i + 1];
+    if (args[i].startsWith("--scope=")) return args[i].slice("--scope=".length);
+  }
+  return config.scopeFile || undefined;
+}
+
+async function intakeCommand(args: string[]): Promise<void> {
+  const scopePath = parseScopeArg(args);
+  if (scopePath === undefined) throw new Error("Usage: intake --scope <file>");
+
+  const result = await intake(scopePath);
+  if (!result.ok) {
+    console.error("Refusing to start:");
+    for (const error of result.errors) console.error(`  - ${error}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const targets = result.scope.targets
+    .map((target) => {
+      const scheme = target.scheme ?? "https";
+      const port =
+        target.port === undefined || target.port === (scheme === "https" ? 443 : 80)
+          ? ""
+          : `:${target.port}`;
+      return `${scheme}://${target.host}${port}`;
+    })
+    .join(", ");
+
+  console.log(`Scope accepted: ${result.scope.name}`);
+  console.log(`  Targets      : ${targets}`);
+  console.log(`  Test classes : ${result.scope.testClasses.join(", ")}`);
+  console.log(`  Read-only    : ${result.scope.readOnly}`);
+  console.log(
+    `  Authorization : ${result.authorization.reference} (valid until ${result.authorization.expiresAt})`,
+  );
+}
+
 async function main(): Promise<void> {
   const [cmd, ...rest] = process.argv.slice(2);
   switch (cmd) {
@@ -58,8 +99,10 @@ async function main(): Promise<void> {
       if (!prompt) throw new Error('Usage: ask "your question"');
       return ask(prompt);
     }
+    case "intake":
+      return intakeCommand(rest);
     default:
-      console.log('Commands: doctor | ask "<prompt>"');
+      console.log('Commands: doctor | ask "<prompt>" | intake --scope <file>');
   }
 }
 

@@ -77,6 +77,9 @@ src/
 ├── config.ts                # env-based configuration (single source)
 ├── health.ts                # Ollama readiness + model checks
 ├── opencode.ts              # OpenCode SDK server/client + Ollama provider
+├── intake.ts                # scope loading and intake validation
+├── audit/
+│   └── log.ts               # append-only hash-chained audit log
 ├── agent/
 │   ├── loop.ts              # state machine and budget enforcement
 │   ├── context.ts           # run context, memory, tool results

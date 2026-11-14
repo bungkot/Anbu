@@ -30,8 +30,10 @@ See `docs/architecture.md` for the planned module layout (`agent/`, `tools/`,
 `guardrails/`, `model/`, `report/`, `store/`).
 
 ## Commands
-- Typecheck: `npm run typecheck`
+- Typecheck: `npm run typecheck` (src + test types)
 - Build: `npm run build`
+- Unit tests: `npm run test`
+- Intake: `npm run intake -- --scope scope/example.json`
 - Diagnose: `npm run doctor`
 - Start stack: `npm run stack:up`
 

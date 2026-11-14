@@ -166,7 +166,10 @@ Goal: prove the engine works against known-vulnerable targets.
 Deliverables:
 
 - `test/unit`, `test/integration`, `test/target`, and `test/report`.
-- Fixture baselines for Juice Shop, WebGoat, DVWA, and crAPI.
+- Fixture baseline for the authorized target `https://demo.testfire.net/`
+      (Altoro Mutual). Local alternatives remain Juice Shop, WebGoat, DVWA, and
+      crAPI. A valid scope document and an unexpired authorization are
+      required before any request is sent.
 - CI: typecheck, build, tests, dependency scan, and SBOM.
 - `npm run test` script.
 

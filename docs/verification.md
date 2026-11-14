@@ -35,6 +35,12 @@ Recommended fixtures (run in Docker, never exposed to the internet):
 Each fixture run produces a baseline of expected findings. A regression is a
 new miss (false negative) or a new unexpected finding (false positive).
 
+Target recorded for M6: **`https://demo.testfire.net/`** (Altoro Mutual,
+a deliberately vulnerable demo application). It is an external host, so it may
+only be exercised with a written authorization from the asset owner and a valid
+scope document; never run it outside those guardrails. Local Docker fixtures
+above are preferred when an authorized external target is unavailable.
+
 ## 3. Unit test policy
 
 For every check:

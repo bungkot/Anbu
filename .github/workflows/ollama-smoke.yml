@@ -1,0 +1,276 @@
+name: Ollama staged model tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Deepest stage to run"
+        required: true
+        default: model
+        type: choice
+        options:
+          - smoke
+          - deterministic
+          - model
+  schedule:
+    - cron: "43 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ollama-staged-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ollama-stages:
+    name: Ollama staged tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      STAGE: ${{ github.event.inputs.stage || 'model' }}
+      OLLAMA_MODEL: dolphin3:8b
+      OLLAMA_BASE_URL: http://127.0.0.1:11434/v1
+      OLLAMA_HOST: 127.0.0.1:11434
+      OLLAMA_CONTEXT_LENGTH: "8192"
+      OLLAMA_KEEP_ALIVE: 30m
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_FLASH_ATTENTION: "1"
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      ANBU_SCOPE_FILE: scope/ci-juice-shop.json
+      ANBU_EVIDENCE_DIR: workspace/evidence
+      ANBU_AUTH_TOKEN: ci-local-lab-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL
+          sudo apt-get clean
+          df -h /
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Ollama (pinned)
+        run: |
+          set -euo pipefail
+          version="v0.40.16"
+          asset="ollama-linux-amd64.tar.zst"
+          sha256="87bfafb2acbc89b2e6a1be0a9043de6aa75fb450696f86bc426e65fc448f788d"
+          archive="$RUNNER_TEMP/$asset"
+
+          curl -fsSL --retry 3 --retry-delay 5 -o "$archive" \
+            "https://github.com/ollama/ollama/releases/download/$version/$asset"
+          echo "$sha256  $archive" | sha256sum --check --strict
+
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zstd
+          zstd --decompress --stdout "$archive" | sudo tar --extract --file - --directory /usr/local
+          rm -f "$archive"
+
+          # The runner is CPU-only; drop GPU/MLX payloads (~4.4 GB).
+          sudo rm -rf \
+            /usr/local/lib/ollama/cuda_v12 \
+            /usr/local/lib/ollama/cuda_v13 \
+            /usr/local/lib/ollama/mlx_cuda_v13 \
+            /usr/local/lib/ollama/vulkan \
+            /usr/local/lib/ollama/include
+
+          ollama --version
+          du -sh /usr/local/lib/ollama
+
+      - name: Start Ollama and pull model
+        run: |
+          set -euo pipefail
+          nohup ollama serve >"$RUNNER_TEMP/ollama.log" 2>&1 &
+
+          ready=""
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+              ready="yes"
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$ready" ]; then
+            echo "Ollama did not become ready" >&2
+            cat "$RUNNER_TEMP/ollama.log" >&2
+            exit 1
+          fi
+
+          curl -fsS http://127.0.0.1:11434/api/tags
+          ollama pull "$OLLAMA_MODEL"
+          ollama list
+
+      - name: Add local OpenCode CLI to PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Verify OpenCode CLI
+        run: |
+          set -euo pipefail
+          if ! command -v opencode >/dev/null 2>&1; then
+            npm install --global opencode-ai@1.19.5
+          fi
+          command -v opencode
+          opencode --version
+
+      - name: Doctor
+        run: node dist/index.js doctor
+
+      - name: Stage 1 - Ollama benchmark
+        id: benchmark
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          response="$metrics/ollama-generate.json"
+          start=$(date +%s%3N)
+          status=0
+          curl -fsS --max-time 600 http://127.0.0.1:11434/api/generate \
+            -H "Content-Type: application/json" \
+            --data "{\"model\":\"$OLLAMA_MODEL\",\"prompt\":\"Explain in one sentence why input validation matters.\",\"stream\":false,\"options\":{\"num_predict\":64,\"temperature\":0}}" \
+            -o "$response" || status=$?
+          end=$(date +%s%3N)
+          if [ -s "$response" ]; then
+            node scripts/ci-metrics.mjs benchmark "$response" "$metrics/benchmark.json" "$((end - start))"
+            cat "$metrics/benchmark.json"
+          fi
+          exit "$status"
+
+      - name: Stage 1 - Ask the model
+        id: ask
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          start=$(date +%s%3N)
+          status=0
+          timeout --signal=TERM --kill-after=30s 600 \
+            node dist/index.js ask "Reply with exactly the two letters OK and nothing else." \
+            | tee "$RUNNER_TEMP/ask.txt" || status=$?
+          end=$(date +%s%3N)
+          node scripts/ci-metrics.mjs timing "$metrics/ask.json" "$((end - start))"
+          test -s "$RUNNER_TEMP/ask.txt"
+          grep -qi "ok" "$RUNNER_TEMP/ask.txt" || status=1
+          exit "$status"
+
+      - name: Stage 2 - Start Juice Shop
+        if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
+        run: |
+          set -euo pipefail
+          docker run --detach --name juice-shop \
+            --publish 127.0.0.1:3000:3000 \
+            bkimminich/juice-shop@sha256:877fc77b12d72b42e486eb09b6b1711cc56514306d92006b284e7e7cf076a809
+
+          ready=""
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null 2>&1; then
+              ready="yes"
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$ready" ]; then
+            echo "Juice Shop did not become ready" >&2
+            docker logs juice-shop >&2 || true
+            exit 1
+          fi
+
+          docker ps --filter name=juice-shop
+
+      - name: Stage 2 - Validate scope and authorization
+        if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
+        run: node dist/index.js intake --scope scope/ci-juice-shop.json
+
+      - name: Stage 2 - Deterministic pentest
+        id: deterministic
+        if: env.STAGE != 'smoke' && steps.ask.outcome == 'success'
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          start=$(date +%s%3N)
+          status=0
+          node dist/index.js pentest \
+            --scope scope/ci-juice-shop.json \
+            --no-model \
+            --json >"$metrics/deterministic-pentest.json" \
+            2>"$metrics/deterministic.stderr.log" || status=$?
+          end=$(date +%s%3N)
+          node scripts/ci-metrics.mjs timing "$metrics/deterministic-seconds.json" "$((end - start))"
+          exit "$status"
+
+      - name: Stage 3 - Model-guided pentest (experimental)
+        id: model
+        if: env.STAGE == 'model' && steps.ask.outcome == 'success' && steps.deterministic.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          start=$(date +%s%3N)
+          status=0
+          timeout --signal=TERM --kill-after=30s 900 \
+            node dist/index.js pentest \
+            --scope scope/ci-juice-shop.json \
+            --json >"$metrics/model-pentest.json" \
+            2>"$metrics/model.stderr.log" || status=$?
+          end=$(date +%s%3N)
+          node scripts/ci-metrics.mjs timing "$metrics/model-seconds.json" "$((end - start))"
+          exit "$status"
+
+      - name: Publish stage summary
+        if: always()
+        env:
+          METRICS_DIR: ${{ runner.temp }}/metrics
+          BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
+          ASK_OUTCOME: ${{ steps.ask.outcome }}
+          DETERMINISTIC_OUTCOME: ${{ steps.deterministic.outcome }}
+          MODEL_OUTCOME: ${{ steps.model.outcome }}
+        run: node scripts/ci-metrics.mjs summary "$METRICS_DIR" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload evidence and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anbu-staged-evidence-${{ github.run_id }}
+          path: |
+            workspace/evidence
+            ${{ runner.temp }}/metrics
+            ${{ runner.temp }}/ollama.log
+            ${{ runner.temp }}/ask.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Show failure logs
+        if: failure()
+        run: |
+          docker logs juice-shop || true
+          tail -n 50 "$RUNNER_TEMP/ollama.log" || true
+          cat "$RUNNER_TEMP/metrics/model.stderr.log" || true
+
+      - name: Stop services
+        if: always()
+        run: |
+          docker rm --force juice-shop || true
+          pkill --full "opencode serve" || true
+          pkill --full "ollama serve" || true

@@ -170,6 +170,7 @@ setup (see `.devcontainer/devcontainer.json` and
 - [Threat model](docs/threat-model.md)
 - [Tool reference](docs/tool-reference.md)
 - [Verification](docs/verification.md)
+- [Ollama staged model tests](docs/ci-ollama-smoke.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Development
@@ -178,6 +179,16 @@ OpenCode loads `AGENTS.md` plus the agents, skills, and commands under
 `pentester` agent for implementation. There are 10 OWASP Top 10:2025 category
 skills and 10 matching category agents (`a01`-`a10`), plus the cross-cutting
 `owasp-top10-2025` overview and `recon-and-scope` skills.
+
+GitHub Actions runs two workflows: `ci.yml` on every push, pull request, weekly
+schedule, and manual dispatch (typecheck, lint, format, build, tests, audit,
+SBOM), and `ollama-smoke.yml` on manual dispatch and a weekly schedule. The
+latter installs a pinned Ollama release, pulls `dolphin3:8b`, and runs three
+stages: a measured model smoke test, a read-only deterministic pentest against
+Juice Shop, and an experimental model-guided pentest. Stage 1 reports load and
+token throughput; stages 2 and 3 add request, model-turn, and timing metrics to
+the job summary. See [`docs/ci-ollama-smoke.md`](docs/ci-ollama-smoke.md) for
+stage selection and limits.
 
 ```bash
 npm run typecheck   # src + test types

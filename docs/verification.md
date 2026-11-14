@@ -127,6 +127,21 @@ At the time of writing the scan reports only moderate advisories in the
 available; they are tracked here rather than silently ignored. High and
 critical advisories fail CI.
 
+### Ollama staged model tests
+
+`.github/workflows/ollama-smoke.yml` is a separate manual and weekly workflow
+that exercises a real uncensored model (`dolphin3:8b`) on the runner in three
+stages. Stage 1 installs the pinned Ollama release, verifies its checksum, pulls
+the model, benchmarks load/prompt/generation throughput, and runs `doctor` plus
+`ask`. Stage 2 runs a read-only deterministic pentest against a digest-pinned
+Juice Shop container. Stage 3 runs the planner against the same target with a
+two-turn budget; it is experimental and non-blocking because a CPU-only runner
+can exceed the SDK planner timeout. The job summary reports the metrics, and the
+evidence plus metrics directory is uploaded as an artifact. The workflow stays
+off the per-push path because both the Ollama archive and the model are
+multi-gigabyte downloads. See [`ci-ollama-smoke.md`](ci-ollama-smoke.md) for the
+stage selection, resource budget, pins, and local reproduction steps.
+
 ## 8. Release gates
 
 - No known-vulnerable dependencies (no high or critical advisories; any

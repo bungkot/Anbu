@@ -25,8 +25,9 @@ LLM-guided reasoning and maps findings to the OWASP Top 10:2025.
   deterministic OWASP check registry.
 - `src/store/evidence-store.ts`: hashed, size-capped, redacted local evidence.
 - `docker-compose.yml`, `Dockerfile`: single container setup (Ollama + one app/dev service). The dev container (`.devcontainer/devcontainer.json`) reuses this same compose file and Dockerfile and pins `OLLAMA_MODEL=granite3.3:2b`.
-- `scripts/`: host bootstrap/doctor helpers plus `devcontainer-setup.sh` (deps + model pull inside the dev container).
-- `docs/`: architecture, methodology, agent loop, scope, threat model, tools, verification, troubleshooting.
+- `scripts/`: host bootstrap/doctor helpers, `devcontainer-setup.sh` (deps + model pull inside the dev container), and `ci-metrics.mjs` (staged CI benchmark/summary rendering).
+- `.github/workflows/ollama-smoke.yml`: manual/weekly staged model tests (`dolphin3:8b`): benchmark + `ask`, read-only deterministic pentest, then an experimental model-guided pentest; `scope/ci-juice-shop.json` is its scope.
+- `docs/`: architecture, methodology, agent loop, scope, threat model, tools, verification, CI model stages, troubleshooting.
 - `ROADMAP.md`: phased plan from scaffolding to the v1.0 pentest engine.
 - `.opencode/agents/`: OpenCode harness agents (architect, pentester, reviewer, security-analyst, plus one `a01`-`a10` agent per OWASP category).
 - `.opencode/commands/`: OpenCode harness commands.

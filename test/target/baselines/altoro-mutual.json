@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "fixture": "https://demo.testfire.net/",
+  "authorizationRequired": true,
+  "status": "pending-authorization",
+  "expectedReportedCheckIds": [],
+  "ignoredCheckIds": [],
+  "notes": [
+    "Altoro Mutual is an external host. No request has been sent because this repository holds no written authorization for it.",
+    "Record this baseline only with an authorized scope document and a resolved ANBU_AUTH_TOKEN, then store the result under workspace/evidence/target-runs/.",
+    "Never run this baseline outside those guardrails; see docs/verification.md and test/target/README.md."
+  ]
+}

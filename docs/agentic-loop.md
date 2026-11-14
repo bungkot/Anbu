@@ -135,6 +135,7 @@ instructions.
 | `maxBodyBytes` | 64 KiB | Cap captured response bodies. |
 | `maxRedirects` | 3 | Prevent redirect loops. |
 | `maxReproductions` | 25 | Cap check re-runs during the verify state. |
+| `maxInputsPerCheck` | 4 | Cap distinct discovered URLs each deterministic check exercises. |
 
 Stop conditions: budget exhausted, guardrail violation streak, tool failure
 streak, planner requests halt, or human stop. Candidates left unverified when

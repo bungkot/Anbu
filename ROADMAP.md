@@ -156,8 +156,8 @@ originating check through the guarded tool layer and comparing the reproduced
 response with the captured baseline evidence; candidates that cannot be
 reproduced are withheld. The run directory receives `report.json`,
 `report.md`, and `report.sarif`. 212 unit tests pass; `npm run typecheck`,
-`npm run lint`, and `npm run build` are clean. Integration and target baselines
-remain M6.
+`npm run lint`, and `npm run build` are clean. M6 adds the integration, target,
+and report suites, CI, and SBOM generation.
 
 ## M6 — End-to-end validation and CI
 
@@ -165,19 +165,28 @@ Goal: prove the engine works against known-vulnerable targets.
 
 Deliverables:
 
-- `test/unit`, `test/integration`, `test/target`, and `test/report`.
-- Fixture baseline for the authorized target `https://demo.testfire.net/`
+- [x] `test/unit`, `test/integration`, `test/target`, and `test/report`.
+- [x] Fixture baseline for the authorized target `https://demo.testfire.net/`
       (Altoro Mutual). Local alternatives remain Juice Shop, WebGoat, DVWA, and
       crAPI. A valid scope document and an unexpired authorization are
       required before any request is sent.
-- CI: typecheck, build, tests, dependency scan, and SBOM.
-- `npm run test` script.
+- [x] CI: typecheck, build, tests, dependency scan, and SBOM.
+- [x] `npm run test` script.
 
 Exit criteria:
 
-- Guardrail tests pass (scope, deny, expiry, redirects, state-changing, rate
+- [x] Guardrail tests pass (scope, deny, expiry, redirects, state-changing, rate
   limit, credential redaction).
-- Fixture baselines show no unexplained findings or misses.
+- [x] Fixture baselines show no unexplained findings or misses.
+
+Status: complete. `test/integration`, `test/target`, and `test/report` join the
+unit suite, and `npm run test` runs all four. The local fixture baseline is
+recorded and reproduces exactly; the Altoro Mutual baseline stays
+`pending-authorization` because the repository holds no written authorization
+for the external host, and the suite proves no request is sent without a
+resolved token. `.github/workflows/ci.yml` runs typecheck, lint, build, all
+tests, `npm audit --audit-level=high`, and CycloneDX SBOM generation on every
+push, pull request, and weekly schedule.
 
 ## M7 — v1.0 release
 

@@ -3,13 +3,11 @@
 Verification covers two things: the correctness of Anbu's code, and the
 quality of its findings.
 
-> Status: unit tests are implemented and run with `npm run test`, including a
-> vulnerable and a safe fixture for every deterministic check under
-> `test/unit/checks/`, agent-loop coverage (budgets, planner parsing, approval
-> gates, stop reasons, deterministic fallback, verification) under
-> `test/unit/agent/`, and report rendering (Markdown, JSON, SARIF, discarded
-> handling) under `test/unit/report/`. Integration and target suites are
-> planned; see `ROADMAP.md`.
+> Status: all four suites are implemented and run with `npm run test`:
+> `test/unit` (deterministic check fixtures, guardrails, agent loop, report
+> rendering), `test/integration` (guarded HTTP end to end and the pentest loop),
+> `test/target` (recorded fixture baselines), and `test/report` (rendered
+> findings and verification). See `ROADMAP.md`.
 
 ## 1. Levels
 
@@ -18,7 +16,7 @@ quality of its findings.
 | Unit | A check detects a known-vulnerable fixture and ignores a safe one. | `test/unit` |
 | Integration | The loop, guardrails, and evidence store work end to end. | `test/integration` |
 | Target | The engine runs against a deliberately vulnerable application. | `test/target` |
-| Report | Findings, severity, coverage, and evidence are accurate; only confirmed/probable findings reach the rendered views. | `test/unit/report` |
+| Report | Findings, severity, coverage, and evidence are accurate; only confirmed/probable findings reach the rendered views. | `test/unit/report`, `test/report` |
 
 ## 2. Safe target applications
 
@@ -40,6 +38,12 @@ a deliberately vulnerable demo application). It is an external host, so it may
 only be exercised with a written authorization from the asset owner and a valid
 scope document; never run it outside those guardrails. Local Docker fixtures
 above are preferred when an authorized external target is unavailable.
+
+The M6 local baseline is recorded in
+`test/target/baselines/local-fixture.json` against `test/target/fixture.ts`;
+see `test/target/README.md`. The Altoro Mutual baseline stays
+`pending-authorization` until a written authorization is supplied, and the
+suite proves no request is sent to it without a resolved `ANBU_AUTH_TOKEN`.
 
 ## 3. Unit test policy
 
@@ -102,14 +106,25 @@ Track per release:
 
 ## 7. CI
 
-- Typecheck and build on every change.
-- Unit and integration tests on every change.
-- Dependency vulnerability scan (A03) on the project itself.
-- Optional nightly run against local fixtures; results reviewed before release.
+`.github/workflows/ci.yml` runs on every push, pull request, weekly schedule,
+and manual dispatch:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build`.
+- `npm run test:all` (unit, integration, target, report).
+- `npm run audit` (`npm audit --audit-level=high`) for the project's own
+  dependency tree (A03).
+- `npm run sbom` writes a CycloneDX SBOM to `dist/sbom.json`, uploaded as a
+  workflow artifact.
+
+At the time of writing the scan reports only moderate advisories in the
+`typescript-eslint`/`minimatch` development tooling with no patched release
+available; they are tracked here rather than silently ignored. High and
+critical advisories fail CI.
 
 ## 8. Release gates
 
-- No known-vulnerable dependencies.
+- No known-vulnerable dependencies (no high or critical advisories; any
+  remaining moderate advisory is documented with a tracked remediation).
 - All guardrail tests pass.
 - No unchecked or unverified findings in fixture baselines.
 - Documentation matches the implemented CLI, scope format, and tool schemas.

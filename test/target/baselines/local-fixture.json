@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "fixture": "test/target/fixture.ts (127.0.0.1 ephemeral port)",
+  "authorizationRequired": false,
+  "status": "recorded",
+  "expectedReportedCheckIds": [
+    "cors",
+    "error-handling",
+    "force-browsing",
+    "logging",
+    "rate-limit",
+    "security-headers",
+    "sqli",
+    "xss"
+  ],
+  "ignoredCheckIds": [
+    {
+      "checkId": "dependencies",
+      "reason": "The dependency check reads the scanner's own package-lock.json rather than the target; it is a supply-chain tool, not a web finding."
+    }
+  ],
+  "notes": [
+    "Recorded from a deterministic-only run (model disabled) against the local fixture.",
+    "Read-only checks only; state-changing checks (authz-methods, default-credentials, upload, xxe) require an approval gate and are skipped.",
+    "A regression is a missing or unexpected entry in expectedReportedCheckIds."
+  ]
+}

@@ -56,8 +56,10 @@ const COOKIE_ATTRIBUTES = new Set([
 
 const JWT_PATTERN = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\b/g;
 const BEARER_PATTERN = /\b(Bearer\s+)[A-Za-z0-9._~+/=-]+/gi;
+// The prefix group includes `^` so a credential at the very start of the body
+// (for example `access_token=secret`) is still redacted.
 const ASSIGNMENT_PATTERN =
-  /([?&=;\s"'])(access_token|api_key|apikey|auth|authorization|id_token|passwd|password|pwd|refresh_token|secret|session|sessionid|sid|token)([=:])([^&;\s"']+)/gi;
+  /(^|[?&=;\s"'])(access_token|api_key|apikey|auth|authorization|id_token|passwd|password|pwd|refresh_token|secret|session|sessionid|sid|token)([=:])([^&;\s"']+)/gi;
 
 export interface EvidenceRequest {
   method: string;

@@ -91,6 +91,30 @@ test("redacts credentials, cookies, query tokens, and body secrets", async () =>
   );
 });
 
+test("redacts a credential assignment at the very start of a text body", async () => {
+  const { store } = await makeStore();
+  const result = await store.capture({
+    request: {
+      method: "GET",
+      url: "https://example.test/leak",
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    },
+    response: {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+      body: "access_token=smoke-secret-value&note=safe",
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const artifact = await store.get(result.evidenceId);
+  assert.ok(artifact);
+  assert.doesNotMatch(JSON.stringify(artifact), /smoke-secret-value/);
+  assert.match(artifact.response.body ?? "", /access_token=\[REDACTED\]/);
+  assert.match(artifact.response.body ?? "", /note=safe/);
+});
+
 test("refuses artifacts larger than the size cap", async () => {
   const { store } = await makeStore({ maxArtifactBytes: 64 });
   const result = await store.capture({

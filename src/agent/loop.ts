@@ -42,6 +42,7 @@ export interface PentestOptions {
   maxDepth?: number;
   maxUrls?: number;
   maxActionsPerPlan?: number;
+  /** Maximum distinct discovered URLs each deterministic check exercises. Default 4. */
   maxInputsPerCheck?: number;
   /** Maximum check re-runs during the verify state. Default 25. */
   maxReproductions?: number;
@@ -506,7 +507,7 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
       ctx.stop("budget_exhausted");
       break;
     }
-    const inputs = deriveCheckInputs(attackSurface, options.maxInputsPerCheck ?? 2);
+    const inputs = deriveCheckInputs(attackSurface, options.maxInputsPerCheck ?? 4);
     for (const input of inputs) {
       if (ctx.stopReason !== undefined) break;
       if (ctx.budget.exhaustedReason() !== undefined) {

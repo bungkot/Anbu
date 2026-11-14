@@ -18,8 +18,9 @@ the loop for any state-changing or destructive action.
 ## Project status
 
 ANBU has completed M0 (scaffolding), M1 (foundation), M2 (tool layer and
-evidence), M3 (deterministic OWASP checks), M4 (agentic loop and planner), and
-M5 (verification and reporting). The repository builds and runs the local
+evidence), M3 (deterministic OWASP checks), M4 (agentic loop and planner), M5
+(verification and reporting), and M6 (end-to-end validation and CI). The
+repository builds and runs the local
 Ollama/OpenCode integration, and the engine can validate a scope, refuse
 out-of-scope or unauthorized runs before any network call, crawl in-scope
 targets through the guarded HTTP client, store hashed, redacted evidence
@@ -44,9 +45,14 @@ reporting it:
 - `npm run report -- --run <run-directory>` — renders an existing run report as
   Markdown (default), JSON, or SARIF (`--format`), optionally to a file
   (`--out`). Add `--all` to include discarded candidates.
-- `npm run test` — runs the unit suite (scope, guardrails, authorization,
-  rate limits, audit chain, intake, guarded HTTP, crawl, evidence, recon,
-  deterministic checks, the agent loop, verification, and report rendering).
+- `npm run test` — runs all four suites (`test:unit`, `test:integration`,
+  `test:target`, `test:report`): scope, guardrails, authorization, rate limits,
+  audit chain, intake, guarded HTTP, crawl, evidence, recon, deterministic
+  checks, the agent loop, verification, report rendering, and the recorded
+  fixture baselines.
+- `npm run audit` — dependency vulnerability scan for the project itself
+  (fails on high or critical advisories).
+- `npm run sbom` — writes a CycloneDX SBOM to `dist/sbom.json`.
 
 ## How it works
 
@@ -99,7 +105,7 @@ git clone <repo> && cd ANBU
 ./scripts/bootstrap.sh          # Docker memory check, .env, Ollama, model pull
 npm install
 npm run typecheck               # strict TypeScript + test types
-npm run test                    # unit suite
+npm run test                    # all suites
 npm run doctor                  # verify Ollama + model
 npm run ask -- "Hello"          # try the local model through the OpenCode SDK
 ```
@@ -155,7 +161,7 @@ skills and 10 matching category agents (`a01`-`a10`), plus the cross-cutting
 
 ```bash
 npm run typecheck   # src + test types
-npm run test        # unit suite (node:test via tsx)
+npm run test        # all suites (unit, integration, target, report)
 npm run build       # emit dist/
 ```
 

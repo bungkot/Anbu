@@ -17,11 +17,12 @@ the loop for any state-changing or destructive action.
 
 ## Project status
 
-ANBU has completed M0 (scaffolding), M1 (foundation), and M2 (tool layer and
-evidence). The repository builds and runs the local Ollama/OpenCode
-integration, and the engine can validate a scope, refuse out-of-scope or
-unauthorized runs before any network call, crawl in-scope targets through the
-guarded HTTP client, and store hashed, redacted evidence locally:
+ANBU has completed M0 (scaffolding), M1 (foundation), M2 (tool layer and
+evidence), M3 (deterministic OWASP checks), and M4 (agentic loop and planner).
+The repository builds and runs the local Ollama/OpenCode integration, and the
+engine can validate a scope, refuse out-of-scope or unauthorized runs before
+any network call, crawl in-scope targets through the guarded HTTP client, store
+hashed, redacted evidence locally, and run a bounded agentic pentest:
 
 - `npm run doctor` — verifies Docker, Ollama, and the pinned model.
 - `npm run ask -- "..."` — sends a prompt to the local model through the
@@ -30,12 +31,16 @@ guarded HTTP client, and store hashed, redacted evidence locally:
   and its authorization, with clear refusal reasons and a non-zero exit code.
 - `npm run recon -- --scope scope/example.json` — read-only crawl and
   attack-surface summary (URLs, forms, assets, technologies, blocked requests).
+- `npm run pentest -- --scope scope/example.json` — runs the bounded agent
+  loop (deterministic baseline first, then model-guided checks) and prints
+  coverage, budgets, stop reason, and findings. Use `--no-model` to force the
+  deterministic-only fallback path and `--json` for machine-readable output.
 - `npm run test` — runs the unit suite (scope, guardrails, authorization,
-  rate limits, audit chain, intake, guarded HTTP, crawl, evidence, recon).
+  rate limits, audit chain, intake, guarded HTTP, crawl, evidence, recon,
+  deterministic checks, and the agent loop).
 
-The OWASP checks, agentic loop, and reports are planned and tracked in
-[`ROADMAP.md`](ROADMAP.md). Until then, the `pentest` and `report` commands do
-not exist yet.
+Verification and reporting (reproduction, coverage matrices, Markdown/JSON/
+SARIF reports) is planned and tracked in [`ROADMAP.md`](ROADMAP.md).
 
 ## How it works
 
@@ -93,13 +98,12 @@ npm run doctor                  # verify Ollama + model
 npm run ask -- "Hello"          # try the local model through the OpenCode SDK
 ```
 
-Running a real assessment requires the planned `pentest` command (M4 in
-[`ROADMAP.md`](ROADMAP.md)):
+Run an authorized assessment with the `pentest` command:
 
 ```bash
 npm run intake -- --scope scope/example.json   # validate scope + authorization
 npm run recon -- --scope scope/example.json     # read-only attack surface
-npm run pentest -- --scope scope/example.json   # planned (M4)
+npm run pentest -- --scope scope/example.json   # bounded agentic run
 ```
 
 The scope file declares the targets, allowed test classes, rate limits, and the

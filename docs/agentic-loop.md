@@ -147,6 +147,13 @@ streak, planner requests halt, or human stop.
   DoS-like load): always require explicit approval and are denied by default.
 - Approvals are recorded in the audit log with actor, timestamp, and reason.
 
+Current status (M4): state-changing checks call the approval provider before
+running, and the default provider denies every request. An interactive provider
+and `--auto-approve` flag are part of the M5 HITL follow-up. Scope
+`stateChanging` modes (`deny`, `approve`, `allow`) stay enforced by the policy
+guardrail independently of the approval provider, so granting an approval can
+never bypass a read-only scope.
+
 ## 8. Failure handling
 
 - Network errors are retried once with backoff, then recorded.

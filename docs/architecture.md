@@ -175,8 +175,8 @@ can be configured to halt on repeated violations.
 
 ## 10. Deployment
 
-- **Host**: Node + Ollama in Docker; run the `pentest` CLI (planned; see `ROADMAP.md`).
-- **Container**: `docker compose run --rm --entrypoint node app /app/dist/index.js pentest --scope ...` (planned; see `ROADMAP.md`).
+- **Host**: Node + Ollama in Docker; run the `pentest` CLI.
+- **Container**: `docker compose run --rm --entrypoint node app /app/dist/index.js pentest --scope ...`
 - **Dev container**: open the folder in VS Code and use "Reopen in Container";
   the repository is mounted at `/workspace`.
 - Ollama is bound to `127.0.0.1` only; no target data leaves the machine.

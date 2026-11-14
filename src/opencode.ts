@@ -30,6 +30,13 @@ export async function startOpencode() {
           prompt: "Answer the user directly and concisely. Do not use tools.",
           tools: { "*": false },
         },
+        planner: {
+          model: `ollama/${config.model}`,
+          mode: "primary",
+          prompt:
+            "You are the Anbu pentest planner. Return only the structured JSON plan described in the user prompt. Do not use tools.",
+          tools: { "*": false },
+        },
       },
     },
   });

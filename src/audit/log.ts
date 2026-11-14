@@ -14,6 +14,18 @@ export interface AuditDetails {
   findings?: number;
   /** Number of HTTP requests the check issued. */
   requests?: number;
+  /** OWASP category of a finding. */
+  category?: string;
+  /** HTTP status of an observed response. */
+  status?: number;
+  /** Scope name for run lifecycle entries. */
+  scope?: string;
+  /** Authorization reference for run lifecycle entries. */
+  authorization?: string;
+  /** Target hosts for run lifecycle entries. */
+  targets?: string[];
+  /** Stop reason for run lifecycle entries. */
+  stopReason?: string;
 }
 
 export interface AuditEntry {

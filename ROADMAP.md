@@ -29,8 +29,8 @@ Status legend: `[x]` done · `[~]` in progress · `[ ]` planned
 - [x] OWASP Top 10:2025 docs, agents, skills, and commands under `.opencode/`.
 - [x] Scope document example and authorization rules documented.
 
-Not yet implemented: the pentest CLI, agentic loop, tool layer, guardrails,
-checks, evidence store, and reports.
+Later phases add the tool layer and evidence store (M2), deterministic checks
+(M3), the pentest CLI and agentic loop (M4), and verification/reporting (M5).
 
 ## M1 — Foundation: config, scope, guardrails, audit
 
@@ -114,19 +114,24 @@ Goal: the bounded loop that plans, executes, verifies, and halts.
 
 Deliverables:
 
-- `src/agent/loop.ts`, `context.ts`, `planner.ts`, `prompts.ts`.
-- LLM planner via the OpenCode SDK with a closed tool schema and structured JSON.
-- Budgets: `maxRequests`, `maxDurationMinutes`, `maxModelTurns`,
-  `maxFindingsPerCategory`, `maxBodyBytes`, and `maxRedirects`.
-- Human-in-the-loop gates for state-changing and destructive actions.
-- `pentest` CLI command: `npm run pentest -- --scope <file>`.
+- [x] `src/agent/loop.ts`, `context.ts`, `planner.ts`, `prompts.ts`.
+- [x] LLM planner via the OpenCode SDK with a closed tool schema and structured JSON.
+- [x] Budgets: `maxRequests`, `maxDurationMinutes`, `maxModelTurns`,
+      `maxFindingsPerCategory`, `maxBodyBytes`, and `maxRedirects`.
+- [x] Human-in-the-loop gates for state-changing and destructive actions.
+- [x] `pentest` CLI command: `npm run pentest -- --scope <file>`.
 
 Exit criteria:
 
-- The loop starts only with a valid scope and stops on budget exhaustion,
-  guardrail violations, or a planner halt.
-- Deterministic checks still run when the model is unavailable.
-- Every finding has evidence and a reproduction attempt.
+- [x] The loop starts only with a valid scope and stops on budget exhaustion,
+      guardrail violations, or a planner halt.
+- [x] Deterministic checks still run when the model is unavailable.
+- [x] Every finding has evidence and a reproduction attempt.
+
+Status: complete. The agent layer adds 43 unit tests under `test/unit/agent/`
+(184 total); `npm run typecheck`, `npm run lint`, and `npm run build` are clean.
+The default approval provider denies every state-changing action; an
+interactive provider and `--auto-approve` are deferred to the M5 HITL follow-up.
 
 ## M5 — Verification and reporting
 

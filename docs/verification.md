@@ -5,8 +5,10 @@ quality of its findings.
 
 > Status: unit tests are implemented and run with `npm run test`, including a
 > vulnerable and a safe fixture for every deterministic check under
-> `test/unit/checks/`. Integration, target, and report suites plus
-> `npm run pentest` are planned; see `ROADMAP.md`.
+> `test/unit/checks/` and agent-loop coverage (budgets, planner parsing,
+> approval gates, stop reasons, deterministic fallback) under
+> `test/unit/agent/`. Integration, target, and report suites are planned; see
+> `ROADMAP.md`.
 
 ## 1. Levels
 
@@ -73,7 +75,10 @@ M1 implements the first six in `test/unit` (`scope.test.ts`, `policy.test.ts`,
 `authorization.test.ts`, `rate-limit.test.ts`, `intake.test.ts`). M2 adds the
 redirect, credential-redaction, and evidence tests (`http.test.ts`,
 `crawl.test.ts`, `evidence-store.test.ts`, `evidence.test.ts`,
-`recon.test.ts`).
+`recon.test.ts`). M4 adds loop-level guardrail tests (`loop.test.ts`): an
+invalid scope refuses before any network call, out-of-scope planner actions
+never reach fetch, approval is required before state-changing checks, and
+granting approval does not bypass the read-only policy.
 
 ## 6. Finding quality metrics
 

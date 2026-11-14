@@ -16,6 +16,10 @@ export const config = {
   /** Default runtime budgets (overridable in the scope document). */
   maxRequests: Number(process.env.ANBU_MAX_REQUESTS ?? 800),
   maxDurationMinutes: Number(process.env.ANBU_MAX_DURATION_MINUTES ?? 60),
+  maxModelTurns: Number(process.env.ANBU_MAX_MODEL_TURNS ?? 120),
+  maxFindingsPerCategory: Number(process.env.ANBU_MAX_FINDINGS_PER_CATEGORY ?? 25),
+  maxBodyBytes: Number(process.env.ANBU_MAX_BODY_BYTES ?? 65_536),
+  maxRedirects: Number(process.env.ANBU_MAX_REDIRECTS ?? 3),
   requestsPerSecondPerHost: Number(process.env.ANBU_REQUESTS_PER_SECOND_PER_HOST ?? 5),
   /** Read-only by default. State-changing tests require explicit approval. */
   readOnly: (process.env.ANBU_READ_ONLY ?? "true") === "true",

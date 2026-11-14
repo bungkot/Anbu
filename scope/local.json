@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "name": "Local OWASP Juice Shop assessment (authorized local lab)",
+  "authorization": {
+    "reference": "LOCAL-LAB-2026-001",
+    "owner": "Local lab operator",
+    "issuedBy": "Local lab operator",
+    "validFrom": "2026-01-01T00:00:00Z",
+    "validUntil": "2027-12-31T23:59:59Z",
+    "token": "env:ANBU_AUTH_TOKEN"
+  },
+  "targets": [
+    {
+      "host": "host.docker.internal",
+      "scheme": "http",
+      "port": 3000
+    }
+  ],
+  "deny": [],
+  "testClasses": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+  "readOnly": true,
+  "policy": {
+    "maxRequests": 800,
+    "maxDurationMinutes": 60,
+    "requestsPerSecondPerHost": 5,
+    "maxBodyBytes": 65536,
+    "maxRedirects": 3,
+    "followExternalRedirects": false,
+    "maxModelTurns": 10,
+    "maxFindingsPerCategory": 25
+  }
+}

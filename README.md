@@ -19,7 +19,9 @@ the loop for any state-changing or destructive action.
 
 ANBU has completed M0 (scaffolding), M1 (foundation), M2 (tool layer and
 evidence), M3 (deterministic OWASP checks), M4 (agentic loop and planner), M5
-(verification and reporting), and M6 (end-to-end validation and CI). The
+(verification and reporting), M6 (end-to-end validation and CI), and M7 (v1.0
+release: the documentation matches the implemented CLI, scope format, action
+schema, check registry, and report model). The
 repository builds and runs the local
 Ollama/OpenCode integration, and the engine can validate a scope, refuse
 out-of-scope or unauthorized runs before any network call, crawl in-scope
@@ -34,14 +36,18 @@ reporting it:
   and its authorization, with clear refusal reasons and a non-zero exit code.
 - `npm run recon -- --scope scope/example.json` — read-only crawl and
   attack-surface summary (URLs, forms, assets, technologies, blocked requests).
+  Options: `--start-url <url>` (repeatable), `--max-depth N`, `--max-urls N`,
+  and `--json`.
 - `npm run pentest -- --scope scope/example.json` — runs the bounded agent
   loop (deterministic baseline first, then model-guided checks), verifies every
   candidate by reproducing it through the guarded tool layer, and writes
   `report.json`, `report.md`, and `report.sarif` to the run directory. Use
-  `--no-model` for the deterministic-only fallback path, `--json` for
-  machine-readable output, and `--auto-approve` / `--interactive-approve` to
-  resolve state-changing actions. Only `confirmed` and `probable` findings are
-  reported; candidates that cannot be reproduced stay in `report.json` only.
+  `--no-model` for the deterministic-only fallback path, `--max-depth N` /
+  `--max-urls N` to bound recon, `--json` for machine-readable output, `--all`
+  with `--json` to include discarded candidates, and `--auto-approve` /
+  `--interactive-approve` to resolve state-changing actions. Only `confirmed`
+  and `probable` findings are reported; candidates that cannot be reproduced
+  stay in `report.json` only.
 - `npm run report -- --run <run-directory>` — renders an existing run report as
   Markdown (default), JSON, or SARIF (`--format`), optionally to a file
   (`--out`). Add `--all` to include discarded candidates.
@@ -117,6 +123,20 @@ npm run intake -- --scope scope/example.json   # validate scope + authorization
 npm run recon -- --scope scope/example.json     # read-only attack surface
 npm run pentest -- --scope scope/example.json   # bounded agentic run
 ```
+
+`scope/example.json` is a template. For a real local target, start OWASP Juice
+Shop and use the checked-in authorized scope example:
+
+```bash
+docker run --rm -p 3000:3000 bkimminich/juice-shop
+export ANBU_AUTH_TOKEN=local-lab-token
+npm run intake -- --scope scope/juice-shop.local.json
+npm run pentest -- --scope scope/juice-shop.local.json
+```
+
+Replace the authorization reference, owner, validity window, and token in
+`scope/juice-shop.local.json` with your own before testing anything you do not
+own.
 
 The scope file declares the targets, allowed test classes, rate limits, and the
 authorization reference. Without a valid scope, the engine refuses to start.

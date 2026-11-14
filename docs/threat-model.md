@@ -70,13 +70,13 @@ the LLM context.
 - Local evidence store only; no external upload.
 - Sanitize and size-limit anything sent to the LLM.
 - Redact personal data where possible.
-- Hash artifacts; restrict file permissions.
+- Hash artifacts and store them only in the local evidence directory.
 
 ### T5 — Denial of service / resource exhaustion
 **Threat**: aggressive testing takes down the target or the host.
 **Mitigations**
 - Per-host and global rate limits.
-- Concurrency caps and timeouts.
+- A per-request timeout and bounded request budgets.
 - Request, duration, and body-size budgets.
 - Destructive and load-generating tests denied by default.
 

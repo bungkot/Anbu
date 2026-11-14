@@ -38,8 +38,8 @@ The architecture prioritizes four properties:
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│ CLI (src/index.ts)                                                │
-│   doctor | recon | pentest | report                              │
+│ CLI (src/index.ts)                                               │
+│   doctor | ask | intake | recon | pentest | report               │
 └───────────────┬──────────────────────────────────────────────────┘
                 │
 ┌───────────────▼──────────────────────────────────────────────────┐
@@ -79,6 +79,7 @@ src/
 ├── opencode.ts              # OpenCode SDK server/client + Ollama provider
 ├── intake.ts                # scope loading and intake validation
 ├── recon.ts                 # read-only crawl + attack-surface aggregation
+├── pentest.ts               # pentest CLI command
 ├── report.ts                # report CLI command
 ├── audit/
 │   └── log.ts               # append-only hash-chained audit log
@@ -117,17 +118,27 @@ src/
 ## 5. Data model
 
 ### Scope
-- `version`, `authorization` (reference, owner, expiry, signature/token).
-- `targets[]`: scheme, host, port, path prefix, allowed HTTP methods.
-- `deny[]`: hosts, IP ranges, paths that must never be touched.
-- `policy`: rate limits, max body size, max requests, read-only flag,
-  state-changing allowlist, destructive deny list.
-- `testClasses[]`: OWASP categories in scope.
+- `version`, `name`, `authorization` (reference, owner, optional `issuedBy`,
+  `validFrom`, `validUntil`, `token`).
+- `targets[]`: host, optional `scheme`/`port`, path prefixes, allowed HTTP
+  methods. Omitted `paths` means all paths; omitted `methods` means read-only
+  methods.
+- `deny[]`: host entries with optional path prefixes, or CIDR entries, that
+  must never be touched. Deny wins over allow.
+- `readOnly`: blocks all state-changing methods when true (default true).
+- `stateChanging`: `deny` (default), `approve`, or `allow` with an explicit
+  `METHOD /path` allowlist.
+- `policy`: `maxRequests`, `maxDurationMinutes`, `maxConcurrentPerHost`
+  (accepted but not enforced; requests are sequential),
+  `requestsPerSecondPerHost`, `maxBodyBytes`, `maxRedirects`,
+  `followExternalRedirects`, `maxModelTurns`, `maxFindingsPerCategory`.
+- `testClasses[]`: OWASP categories in scope; defaults to all ten when omitted.
 
 ### Finding
 - `id`, `category` (A01-A10), `cwe`, `severity`, `confidence`.
 - `title`, `affected` (URL, parameter, endpoint).
-- `evidence[]`: request, response metadata, sanitized bodies, timestamp.
+- `evidence[]`: content-addressed references (`evidenceId`, `sha256`, path) to
+  stored request/response artifacts.
 - `reproduction`: exact steps.
 - `remediation`: mapped to OWASP prevention guidance.
 - `falsePositiveAnalysis`: why the finding is not a false positive.
@@ -139,12 +150,22 @@ src/
 - Raw artifacts are never rendered directly into the LLM context without
   sanitization and size limits.
 
+### Report
+- Envelope: `reportVersion`, `runId`, `scopeReference`, `generatedAt`,
+  `methodology`, `findings`, `coverage`, `budgets`, `stopReason`, `audit`.
+- Written as `report.json`; rendered as `report.md` and `report.sarif`.
+- Coverage statuses are `covered`, `not_applicable`, and `not_run`.
+- Budgets report request, wall-clock, and model-turn usage against their limits.
+- Only `confirmed` and `probable` findings appear in Markdown and SARIF by
+  default; `report.json` keeps discarded candidates for audit.
+
 ## 6. LLM integration
 
 - The OpenCode SDK hosts a local OpenCode server; the Ollama provider is passed
   inline (see `src/opencode.ts`).
-- The LLM receives a **structured task prompt**: attack surface summary,
-  selected OWASP checks, tool schemas, and budget. It returns structured JSON.
+- The LLM receives a **structured task prompt**: run metadata, the attack
+  surface, the available read-only checks, the closed action schema, recent
+  tool results, and the remaining budget. It returns structured JSON.
 - The LLM never receives raw target responses larger than a configured cap and
   never receives secrets.
 - LLM output is parsed strictly; unknown fields are discarded. Any tool call is
@@ -159,8 +180,7 @@ Every outbound request passes through:
 1. **Scope check** — host, port, path, and method must be allowed.
 2. **Deny check** — explicit deny entries win over allow entries.
 3. **Authorization check** — the authorization document is valid and unexpired.
-4. **Policy check** — body size, content type, redirect behavior, and
-   destructive-action rules.
+4. **Policy check** — body size, state-changing rules, and redirect behavior.
 5. **Rate limit** — per-host token bucket plus a global request budget.
 
 A violation is recorded in the audit log and the request is dropped. The loop
@@ -168,14 +188,16 @@ can be configured to halt on repeated violations.
 
 ## 8. Concurrency and budget
 
-- Requests are issued with bounded concurrency per host (default 1-2).
+- Requests are issued sequentially. `policy.maxConcurrentPerHost` is accepted
+  for forward compatibility but is not enforced.
 - The loop enforces: max requests, max wall-clock time, max LLM turns, and max
   findings per category.
 - Budgets are part of the scope document and are reported at the end of a run.
 
 ## 9. Extensibility
 
-- A check implements a common interface: metadata (category, CWE, read-only),
+- A check implements a common interface: metadata (id, tool name, categories,
+  CWEs, read-only/approval gate, severity, per-run request cap, references),
   `run(context)`, and a list of candidate findings.
 - Checks are registered in `src/tools/checks/index.ts`.
 - LLM-guided probes use the same tool layer and produce the same finding shape.

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { OWASP_CATEGORIES } from "../../../src/model/scope.js";
 import {
   CHECKS,
@@ -12,31 +13,65 @@ import {
   validateCheckRegistry,
 } from "../../../src/tools/checks/index.js";
 
-const EXPECTED_TOOL_NAMES = [
-  "check_security_headers",
-  "check_tls",
-  "check_password_hash",
-  "check_dependencies",
-  "check_sqli",
-  "check_xss",
-  "check_command_injection",
-  "check_xxe",
-  "check_path_traversal",
-  "check_idor",
-  "check_force_browsing",
-  "check_cors",
-  "check_jwt",
-  "check_authz_methods",
-  "check_default_credentials",
-  "check_error_handling",
-  "check_logging",
-  "check_deserialization",
-  "check_upload",
-  "check_rate_limit",
-];
+interface DocumentedCheck {
+  toolName: string;
+  id: string;
+  categories: string;
+  cwe: string;
+  gate: string;
+}
+
+/** Parse the deterministic-check table out of docs/tool-reference.md. */
+function documentedChecks(): DocumentedCheck[] {
+  const doc = readFileSync(new URL("../../../docs/tool-reference.md", import.meta.url), "utf8");
+  const checks: DocumentedCheck[] = [];
+  for (const line of doc.split(/\r?\n/)) {
+    if (!line.startsWith("| `check_")) continue;
+    const cells = line.split("|").map((cell) => cell.trim());
+    const toolName = cells[1]?.replace(/`/g, "") ?? "";
+    const id = cells[2]?.replace(/`/g, "") ?? "";
+    const categories = cells[3] ?? "";
+    const cwe = cells[4]?.replace(/`/g, "") ?? "";
+    const gate = cells[5]?.replace(/`/g, "") ?? "";
+    if (toolName.length > 0 && id.length > 0) {
+      checks.push({ toolName, id, categories, cwe, gate });
+    }
+  }
+  return checks;
+}
 
 test("registry satisfies its invariants", () => {
   assert.deepEqual(validateCheckRegistry(), []);
+});
+
+test("registry matches the deterministic tools in docs/tool-reference.md", () => {
+  const documented = documentedChecks();
+  assert.ok(documented.length > 0, "no checks found in docs/tool-reference.md");
+  const registry = new Map(CHECKS.map((check) => [check.metadata.id, check] as const));
+  assert.equal(documented.length, registry.size);
+  for (const entry of documented) {
+    const check = registry.get(entry.id);
+    assert.ok(check !== undefined, `docs entry ${entry.toolName} has unknown id ${entry.id}`);
+    assert.equal(check.metadata.toolName, entry.toolName, `docs entry ${entry.id} tool name`);
+    assert.equal(
+      check.metadata.categories.join("/"),
+      entry.categories,
+      `docs entry ${entry.id} categories`,
+    );
+    assert.equal(check.metadata.cwe ?? "", entry.cwe, `docs entry ${entry.id} CWE`);
+    assert.equal(
+      check.metadata.readOnly ? "read-only" : "approval",
+      entry.gate,
+      `docs entry ${entry.id} approval gate`,
+    );
+  }
+  const documentedIds = new Set(documented.map((entry) => entry.id));
+  for (const check of CHECKS) {
+    assert.ok(
+      documentedIds.has(check.metadata.id),
+      `registered check ${check.metadata.id} is missing from docs/tool-reference.md`,
+    );
+  }
 });
 
 test("registry exposes metadata for every check", () => {
@@ -49,11 +84,6 @@ test("registry exposes metadata for every check", () => {
     assert.ok(item.maxRequests >= 0);
     assert.ok(item.references.length > 0);
   }
-});
-
-test("registry covers every deterministic tool in docs/tool-reference.md", () => {
-  const toolNames = CHECKS.map((check) => check.metadata.toolName).sort();
-  assert.deepEqual(toolNames, [...EXPECTED_TOOL_NAMES].sort());
 });
 
 test("every OWASP Top 10:2025 category has at least one check", () => {

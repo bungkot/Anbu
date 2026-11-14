@@ -97,7 +97,7 @@ Every outbound request passes through this order:
    target.
 2. **Deny list** — host/path/CIDR denials are checked and always win.
 3. **Authorization** — the authorization document is still valid.
-4. **Policy** — method, body size, content type, redirect behavior.
+4. **Policy** — method, body size, state-changing rules, redirect behavior.
 5. **Rate limit** — per-host token bucket and global request budget.
 6. **Audit** — the decision and request metadata are logged.
 

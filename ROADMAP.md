@@ -190,9 +190,24 @@ push, pull request, and weekly schedule.
 
 ## M7 — v1.0 release
 
-- Documentation matches the implemented CLI, scope format, and tool schemas.
-- Release gates from `docs/verification.md` all pass.
-- `npm run pentest` is documented with a real authorized scope example.
+- [x] Documentation matches the implemented CLI, scope format, and tool
+      schemas. `docs/architecture.md` documents the report envelope;
+      `docs/tool-reference.md` documents the planner action schema, internal
+      tools, check metadata, and closed options; and
+      `test/unit/checks/registry.test.ts` parses the check tables and compares
+      ids, categories, CWEs, and approval gates against the registry.
+- [x] Release gates from `docs/verification.md` all pass: `npm run typecheck`,
+      `npm run lint`, `npm run build`, `npm run test:all` (225 tests), and
+      `npm run sbom`. `npm run audit` reports no high or critical advisories;
+      the remaining moderate tooling advisory is tracked in CI.
+- [x] `npm run pentest` is documented with a real authorized scope example:
+      `scope/juice-shop.local.json` targets a locally owned OWASP Juice Shop,
+      and the README and `docs/verification.md` show the intake/pentest
+      commands.
+
+Status: complete. The documentation was audited against `src/`; stale
+planner-tool, severity, coverage-status, and CLI-flag references were
+corrected. The package version is bumped to 1.0.0 for the release.
 
 ## Principles
 

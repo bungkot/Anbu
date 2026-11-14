@@ -28,17 +28,17 @@ category.
    rules, and false-positive controls.
 3. For each in-scope category, select deterministic checks first, then
    model-guided probes.
-4. Classify every finding with: category, CWE, severity (CVSS-style band),
+4. Classify every finding with: category, CWE, five-band severity label,
    confidence, evidence, reproduction, remediation.
 5. Reproduce before reporting; discard candidates explained by intended
    behavior.
 6. Fill the coverage matrix; mark skipped categories `not_applicable` or
-   `blocked` with a reason.
+   `not_run` with a reason.
 
 ## Reporting checklist
 
 - Exact 2025 category name and ID.
-- CWE and severity band.
+- CWE and five-band severity label.
 - Affected URL, method, parameter.
 - Sanitized evidence with content hash.
 - Reproduction steps.

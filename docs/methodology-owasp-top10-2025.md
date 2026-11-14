@@ -47,24 +47,28 @@ category names and IDs follow the official
 Deterministic checks must not depend on the LLM. Model-guided probes must use
 the same guarded tools and produce the same finding shape.
 
-## 4. Severity model
+## 4. Severity and confidence model
 
-Findings use a CVSS 3.1/4.0-style base score and a four-band label:
+Findings carry a five-band severity label and a confidence value.
 
-| Band | Score | Meaning |
-|---|---|---|
-| Critical | 9.0 - 10.0 | Remote code execution, full auth bypass, mass data exposure |
-| High | 7.0 - 8.9 | Direct data access, privilege escalation, injection with impact |
-| Medium | 4.0 - 6.9 | Limited exposure, requires conditions, defense-in-depth gaps |
-| Low | 0.1 - 3.9 | Hard to exploit, minimal impact, best-practice deviation |
-| Info | 0.0 | Observation, not a vulnerability |
+| Severity | Meaning |
+|---|---|
+| `critical` | Remote code execution, full authentication bypass, mass data exposure |
+| `high` | Direct data access, privilege escalation, injection with impact |
+| `medium` | Limited exposure, requires conditions, defense-in-depth gaps |
+| `low` | Hard to exploit, minimal impact, best-practice deviation |
+| `informational` | Observation, not a vulnerability |
 
-Also record:
-- **Likelihood** and **Impact** using the OWASP risk methodology for executive
-  prioritization.
-- **Confidence**: `confirmed` (reproduced), `probable` (strong evidence, not
-  reproduced), `low` (single signal). Only `confirmed` and `probable` findings
-  are reported by default.
+Confidence values:
+
+- `confirmed` — the originating check reproduced the finding and the
+  reproduced response matched the captured evidence.
+- `probable` — the finding has valid evidence but was not reproduced (for
+  example the reproduction budget was reached, or the check is state-changing
+  and approval was not granted).
+- `unverified` — withheld candidate; never reported by default.
+
+Only `confirmed` and `probable` findings are reported by default.
 
 ## 5. Evidence requirements
 
@@ -96,8 +100,8 @@ from evidence before it is stored or rendered.
 
 A run is complete when every in-scope category has either:
 
-- at least one executed check with results, or
-- an explicit `not_applicable` / `blocked` reason recorded.
+- at least one executed check with results (`covered`), or
+- an explicit `not_applicable` / `not_run` reason recorded.
 
 The report always includes the coverage matrix so gaps are visible.
 

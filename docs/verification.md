@@ -61,8 +61,13 @@ npm run build
 npm run typecheck
 npm run test
 docker run --rm -p 3000:3000 bkimminich/juice-shop
+export ANBU_AUTH_TOKEN=local-lab-token   # PowerShell: $env:ANBU_AUTH_TOKEN="local-lab-token"
 npm run pentest -- --scope scope/juice-shop.local.json
 ```
+
+`scope/juice-shop.local.json` is a real, runnable example for a target you own
+locally. Replace the authorization reference, owner, validity window, and token
+with your own before using it against anything else.
 
 Validate:
 - The run starts only with a valid scope.
@@ -128,3 +133,5 @@ critical advisories fail CI.
 - All guardrail tests pass.
 - No unchecked or unverified findings in fixture baselines.
 - Documentation matches the implemented CLI, scope format, and tool schemas.
+  `test/unit/checks/registry.test.ts` parses `docs/tool-reference.md` and
+  compares it with the registered checks, so the tool table cannot drift.

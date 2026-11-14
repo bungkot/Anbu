@@ -1,6 +1,6 @@
 {
   "name": "anbu",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Authorized agentic TypeScript web security pentester using the OpenCode SDK, Ollama, and the OWASP Top 10:2025 methodology",

@@ -5,10 +5,11 @@ quality of its findings.
 
 > Status: unit tests are implemented and run with `npm run test`, including a
 > vulnerable and a safe fixture for every deterministic check under
-> `test/unit/checks/` and agent-loop coverage (budgets, planner parsing,
-> approval gates, stop reasons, deterministic fallback) under
-> `test/unit/agent/`. Integration, target, and report suites are planned; see
-> `ROADMAP.md`.
+> `test/unit/checks/`, agent-loop coverage (budgets, planner parsing, approval
+> gates, stop reasons, deterministic fallback, verification) under
+> `test/unit/agent/`, and report rendering (Markdown, JSON, SARIF, discarded
+> handling) under `test/unit/report/`. Integration and target suites are
+> planned; see `ROADMAP.md`.
 
 ## 1. Levels
 
@@ -17,7 +18,7 @@ quality of its findings.
 | Unit | A check detects a known-vulnerable fixture and ignores a safe one. | `test/unit` |
 | Integration | The loop, guardrails, and evidence store work end to end. | `test/integration` |
 | Target | The engine runs against a deliberately vulnerable application. | `test/target` |
-| Report | Findings, severity, coverage, and evidence are accurate. | `test/report` |
+| Report | Findings, severity, coverage, and evidence are accurate; only confirmed/probable findings reach the rendered views. | `test/unit/report` |
 
 ## 2. Safe target applications
 
@@ -55,10 +56,14 @@ npm run pentest -- --scope scope/juice-shop.local.json
 
 Validate:
 - The run starts only with a valid scope.
+- Every candidate finding is reproduced by re-running its originating check;
+  candidates that cannot be reproduced are withheld from Markdown/SARIF.
 - Every finding has evidence and reproduction steps.
 - The coverage matrix matches the scope's `testClasses`.
 - Budgets and stop reason are reported.
 - The audit log is complete and append-only.
+- The run directory contains `report.json`, `report.md`, and `report.sarif`,
+  and `npm run report -- --run <dir>` renders them again.
 
 ## 5. Guardrail tests
 

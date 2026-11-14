@@ -55,7 +55,7 @@ The architecture prioritizes four properties:
                 │ tool calls (structured JSON)
 ┌───────────────▼──────────────────────────────────────────────────┐
 │ Tool layer (src/tools/)                                           │
-│  http.ts  crawl.ts  auth.ts  evidence.ts  checks/                 │
+│  http.ts  crawl.ts  evidence.ts  checks/                          │
 └───────────────┬──────────────────────────────────────────────────┘
                 │ every call passes through
 ┌───────────────▼──────────────────────────────────────────────────┐
@@ -79,17 +79,20 @@ src/
 ├── opencode.ts              # OpenCode SDK server/client + Ollama provider
 ├── intake.ts                # scope loading and intake validation
 ├── recon.ts                 # read-only crawl + attack-surface aggregation
+├── report.ts                # report CLI command
 ├── audit/
 │   └── log.ts               # append-only hash-chained audit log
 ├── agent/
 │   ├── loop.ts              # state machine and budget enforcement
 │   ├── context.ts           # run context, memory, tool results
 │   ├── planner.ts           # LLM planning and check selection
-│   └── prompts.ts           # prompt templates (system/user)
+│   ├── prompts.ts           # prompt templates (system/user)
+│   ├── budget.ts            # budget resolution and stop reasons
+│   ├── approval.ts          # human-in-the-loop approval providers
+│   └── verify.ts            # reproduction and false-positive suppression
 ├── tools/
 │   ├── http.ts              # guarded HTTP client
 │   ├── crawl.ts             # link/form/endpoint discovery
-│   ├── auth.ts              # session and credential handling
 │   ├── evidence.ts          # request/response capture and sanitization
 │   └── checks/              # deterministic OWASP checks, one file per area
 ├── guardrails/
@@ -102,6 +105,8 @@ src/
 │   ├── finding.ts           # Finding, Evidence, Severity, Confidence
 │   └── report.ts            # Report and Coverage types
 ├── report/
+│   ├── index.ts             # shared exports
+│   ├── shared.ts            # finding selection and formatting helpers
 │   ├── markdown.ts
 │   ├── json.ts
 │   └── sarif.ts
@@ -126,6 +131,8 @@ src/
 - `reproduction`: exact steps.
 - `remediation`: mapped to OWASP prevention guidance.
 - `falsePositiveAnalysis`: why the finding is not a false positive.
+- `verification`: result of the verify state (`status`, `reason`, `attempted`,
+  optional reproduction `evidenceId`).
 
 ### Evidence
 - Stored under a run directory with a content hash.

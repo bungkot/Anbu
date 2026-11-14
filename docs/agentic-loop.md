@@ -134,9 +134,12 @@ instructions.
 | `maxFindingsPerCategory` | 25 | Prevent flood/noise. |
 | `maxBodyBytes` | 64 KiB | Cap captured response bodies. |
 | `maxRedirects` | 3 | Prevent redirect loops. |
+| `maxReproductions` | 25 | Cap check re-runs during the verify state. |
 
 Stop conditions: budget exhausted, guardrail violation streak, tool failure
-streak, planner requests halt, or human stop.
+streak, planner requests halt, or human stop. Candidates left unverified when
+the reproduction budget is reached stay probable and are reported with their
+verification reason.
 
 ## 7. Human-in-the-loop gates
 
@@ -147,12 +150,17 @@ streak, planner requests halt, or human stop.
   DoS-like load): always require explicit approval and are denied by default.
 - Approvals are recorded in the audit log with actor, timestamp, and reason.
 
-Current status (M4): state-changing checks call the approval provider before
-running, and the default provider denies every request. An interactive provider
-and `--auto-approve` flag are part of the M5 HITL follow-up. Scope
-`stateChanging` modes (`deny`, `approve`, `allow`) stay enforced by the policy
-guardrail independently of the approval provider, so granting an approval can
-never bypass a read-only scope.
+Approval providers:
+- `denyAllApprovals` — core-slice default; denies every request.
+- `autoApprove` — grants every request (operator choice via `--auto-approve`).
+- `interactiveApprovals()` — prompts on stdin (via `--interactive-approve`) and
+  fails closed on EOF, a missing answer, or a read error.
+
+State-changing checks call the selected provider before running, and both the
+resolution mode (`deny-all`, `auto-approve`, `interactive`) and each decision are
+recorded in the audit log. Scope `stateChanging` modes (`deny`, `approve`,
+`allow`) stay enforced by the policy guardrail independently of the approval
+provider, so granting an approval can never bypass a read-only scope.
 
 ## 8. Failure handling
 

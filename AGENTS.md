@@ -16,11 +16,13 @@ LLM-guided reasoning and maps findings to the OWASP Top 10:2025.
 - `src/config.ts`: centralized environment-based configuration.
 - `src/health.ts`: Ollama readiness and model checks.
 - `src/opencode.ts`: OpenCode SDK server/client setup with inline Ollama provider.
-- `src/index.ts`: CLI entry point (`doctor`, `ask`, `intake`, `recon`, `pentest`),
-  with the pentest command wired through `src/pentest.ts`.
+- `src/index.ts`: CLI entry point (`doctor`, `ask`, `intake`, `recon`, `pentest`,
+  `report`), with the pentest and report commands wired through
+  `src/pentest.ts` and `src/report.ts`.
 - `src/agent/`: bounded pentest loop, planner transport, budgets, approval gate,
-  and prompts.
-- `src/tools/`: guarded HTTP client, read-only crawler, and evidence tools.
+  verify/reproduction state, and prompts.
+- `src/tools/`: guarded HTTP client, read-only crawler, evidence tools, and the
+  deterministic OWASP check registry.
 - `src/store/evidence-store.ts`: hashed, size-capped, redacted local evidence.
 - `docker-compose.yml`, `Dockerfile`: single container setup (Ollama + one app/dev service). The dev container (`.devcontainer/devcontainer.json`) reuses this same compose file and Dockerfile and pins `OLLAMA_MODEL=granite3.3:2b`.
 - `scripts/`: host bootstrap/doctor helpers plus `devcontainer-setup.sh` (deps + model pull inside the dev container).
@@ -32,7 +34,7 @@ LLM-guided reasoning and maps findings to the OWASP Top 10:2025.
 
 ## Target structure
 See `docs/architecture.md` for the module layout (`agent/`, `tools/`,
-`guardrails/`, `model/`, `report/` (planned), `store/`).
+`guardrails/`, `model/`, `report/`, `store/`).
 
 ## Commands
 - Typecheck: `npm run typecheck` (src + test types)

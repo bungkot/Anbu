@@ -130,8 +130,8 @@ Exit criteria:
 
 Status: complete. The agent layer adds 43 unit tests under `test/unit/agent/`
 (184 total); `npm run typecheck`, `npm run lint`, and `npm run build` are clean.
-The default approval provider denies every state-changing action; an
-interactive provider and `--auto-approve` are deferred to the M5 HITL follow-up.
+The default approval provider denies every state-changing action; M5 added the
+interactive provider and the `--auto-approve` / `--interactive-approve` flags.
 
 ## M5 — Verification and reporting
 
@@ -139,15 +139,25 @@ Goal: low false positives and machine- and human-readable output.
 
 Deliverables:
 
-- `src/report/markdown.ts`, `json.ts`, and `sarif.ts`.
-- Baseline comparison and reproduction in the `verify` state.
-- Coverage matrix for all in-scope categories.
-- `report` CLI command.
+- [x] `src/report/markdown.ts`, `json.ts`, and `sarif.ts`.
+- [x] Baseline comparison and reproduction in the `verify` state.
+- [x] Coverage matrix for all in-scope categories.
+- [x] `report` CLI command.
+- [x] HITL follow-up: `interactiveApprovals` provider plus `--auto-approve` and
+      `--interactive-approve`; the resolution mode is recorded in the audit log.
 
 Exit criteria:
 
-- Only `confirmed` and `probable` findings are reported by default.
-- Reports include methodology, coverage, budgets, and the audit log.
+- [x] Only `confirmed` and `probable` findings are reported by default.
+- [x] Reports include methodology, coverage, budgets, and the audit log.
+
+Status: complete. The verify state reproduces every candidate by re-running its
+originating check through the guarded tool layer and comparing the reproduced
+response with the captured baseline evidence; candidates that cannot be
+reproduced are withheld. The run directory receives `report.json`,
+`report.md`, and `report.sarif`. 212 unit tests pass; `npm run typecheck`,
+`npm run lint`, and `npm run build` are clean. Integration and target baselines
+remain M6.
 
 ## M6 — End-to-end validation and CI
 

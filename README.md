@@ -18,11 +18,13 @@ the loop for any state-changing or destructive action.
 ## Project status
 
 ANBU has completed M0 (scaffolding), M1 (foundation), M2 (tool layer and
-evidence), M3 (deterministic OWASP checks), and M4 (agentic loop and planner).
-The repository builds and runs the local Ollama/OpenCode integration, and the
-engine can validate a scope, refuse out-of-scope or unauthorized runs before
-any network call, crawl in-scope targets through the guarded HTTP client, store
-hashed, redacted evidence locally, and run a bounded agentic pentest:
+evidence), M3 (deterministic OWASP checks), M4 (agentic loop and planner), and
+M5 (verification and reporting). The repository builds and runs the local
+Ollama/OpenCode integration, and the engine can validate a scope, refuse
+out-of-scope or unauthorized runs before any network call, crawl in-scope
+targets through the guarded HTTP client, store hashed, redacted evidence
+locally, run a bounded agentic pentest, and verify every candidate before
+reporting it:
 
 - `npm run doctor` — verifies Docker, Ollama, and the pinned model.
 - `npm run ask -- "..."` — sends a prompt to the local model through the
@@ -32,15 +34,19 @@ hashed, redacted evidence locally, and run a bounded agentic pentest:
 - `npm run recon -- --scope scope/example.json` — read-only crawl and
   attack-surface summary (URLs, forms, assets, technologies, blocked requests).
 - `npm run pentest -- --scope scope/example.json` — runs the bounded agent
-  loop (deterministic baseline first, then model-guided checks) and prints
-  coverage, budgets, stop reason, and findings. Use `--no-model` to force the
-  deterministic-only fallback path and `--json` for machine-readable output.
+  loop (deterministic baseline first, then model-guided checks), verifies every
+  candidate by reproducing it through the guarded tool layer, and writes
+  `report.json`, `report.md`, and `report.sarif` to the run directory. Use
+  `--no-model` for the deterministic-only fallback path, `--json` for
+  machine-readable output, and `--auto-approve` / `--interactive-approve` to
+  resolve state-changing actions. Only `confirmed` and `probable` findings are
+  reported; candidates that cannot be reproduced stay in `report.json` only.
+- `npm run report -- --run <run-directory>` — renders an existing run report as
+  Markdown (default), JSON, or SARIF (`--format`), optionally to a file
+  (`--out`). Add `--all` to include discarded candidates.
 - `npm run test` — runs the unit suite (scope, guardrails, authorization,
   rate limits, audit chain, intake, guarded HTTP, crawl, evidence, recon,
-  deterministic checks, and the agent loop).
-
-Verification and reporting (reproduction, coverage matrices, Markdown/JSON/
-SARIF reports) is planned and tracked in [`ROADMAP.md`](ROADMAP.md).
+  deterministic checks, the agent loop, verification, and report rendering).
 
 ## How it works
 

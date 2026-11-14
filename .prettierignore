@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+workspace
+package-lock.json
+*.md
+.opencode
+docs
+scope
+docker-compose.yml
+.env.example

@@ -23,7 +23,11 @@ test("intake accepts a valid scope", async () => {
 });
 
 test("intake reports an unreadable scope file", async () => {
-  const result = await intake(join(tmpdir(), "anbu-does-not-exist", "scope.json"), now, () => "secret");
+  const result = await intake(
+    join(tmpdir(), "anbu-does-not-exist", "scope.json"),
+    now,
+    () => "secret",
+  );
   assert.equal(result.ok, false);
   if (!result.ok) assert.match(result.errors.join("\n"), /cannot read/);
 });

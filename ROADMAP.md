@@ -55,16 +55,23 @@ Exit criteria:
 Status: complete. 41 unit tests pass; `npm run typecheck` and `npm run build`
 are clean.
 
-## M2 — Tool layer and evidence (current)
+## M2 — Tool layer and evidence (in progress)
 
 Goal: a guarded HTTP client and a local evidence store.
 
 Deliverables:
 
-- `src/tools/http.ts`, `crawl.ts`, `evidence.ts`.
-- `src/store/evidence-store.ts` with hashing, size caps, and redaction.
-- `capture_evidence`, `compare_evidence`, and `parse_response` tools.
-- `recon` CLI command (read-only crawl and attack-surface summary).
+- [x] `src/tools/http.ts` — guarded HTTP client. Every request and redirect
+      hop passes scope → deny → authorization → policy → rate limit → audit;
+      external redirects are not followed by default; response bodies are
+      size-capped.
+- [x] `src/tools/crawl.ts` — read-only, BFS link/form/asset/technology
+      discovery through the guarded client; honors `maxDepth`, `maxUrls`, the
+      request budget, deny rules, and `<base href>` resolution.
+- [ ] `src/tools/evidence.ts`.
+- [ ] `src/store/evidence-store.ts` with hashing, size caps, and redaction.
+- [ ] `capture_evidence`, `compare_evidence`, and `parse_response` tools.
+- [ ] `recon` CLI command (read-only crawl and attack-surface summary).
 
 Exit criteria:
 

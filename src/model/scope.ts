@@ -4,15 +4,7 @@ import { isIP } from "node:net";
 
 export const SUPPORTED_SCOPE_VERSION = 1;
 
-export const HTTP_METHODS = [
-  "GET",
-  "HEAD",
-  "OPTIONS",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-] as const;
+export const HTTP_METHODS = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"] as const;
 export type HttpMethod = (typeof HTTP_METHODS)[number];
 
 export const READ_ONLY_METHODS: readonly HttpMethod[] = ["GET", "HEAD", "OPTIONS"];
@@ -111,9 +103,7 @@ export interface Cidr {
 
 export function isValidHostname(host: string): boolean {
   if (host.length === 0 || host.length > 253) return false;
-  return host
-    .split(".")
-    .every((label) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i.test(label));
+  return host.split(".").every((label) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i.test(label));
 }
 
 export function isValidHostPattern(host: string): boolean {
@@ -136,8 +126,7 @@ export function parseCidr(input: string): Cidr | undefined {
   if (prefix < 0 || prefix > bits) return undefined;
   const address = ipToBigInt(addressText);
   if (address === undefined) return undefined;
-  const mask =
-    prefix === 0 ? 0n : (1n << BigInt(bits)) - (1n << BigInt(bits - prefix));
+  const mask = prefix === 0 ? 0n : (1n << BigInt(bits)) - (1n << BigInt(bits - prefix));
   return { raw: input, family, address, prefix, mask };
 }
 
@@ -536,10 +525,7 @@ function parseTestClasses(input: unknown, errors: string[]): OwaspCategory[] | u
   return classes;
 }
 
-function parseStateChanging(
-  input: unknown,
-  errors: string[],
-): StateChangingPolicy | undefined {
+function parseStateChanging(input: unknown, errors: string[]): StateChangingPolicy | undefined {
   if (input === undefined) return undefined;
   if (!isRecord(input)) {
     errors.push("stateChanging must be an object");

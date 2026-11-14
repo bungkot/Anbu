@@ -49,7 +49,16 @@ test("literal token resolves", () => {
 });
 
 test("resolveToken reads env references only", () => {
-  assert.equal(resolveToken("env:FOO", (name) => (name === "FOO" ? "bar" : undefined)), "bar");
-  assert.equal(resolveToken("env:MISSING", () => undefined), undefined);
-  assert.equal(resolveToken("literal", () => undefined), "literal");
+  assert.equal(
+    resolveToken("env:FOO", (name) => (name === "FOO" ? "bar" : undefined)),
+    "bar",
+  );
+  assert.equal(
+    resolveToken("env:MISSING", () => undefined),
+    undefined,
+  );
+  assert.equal(
+    resolveToken("literal", () => undefined),
+    "literal",
+  );
 });

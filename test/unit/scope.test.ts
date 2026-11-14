@@ -84,14 +84,15 @@ test("path prefix must match", () => {
     targets: [{ host: "example.test", scheme: "https", port: 443, paths: ["/app"] }],
   });
   assert.equal(evaluateScope(scope, request("GET", "https://example.test/app/x")).allowed, true);
-  assert.equal(evaluateScope(scope, request("GET", "https://example.test/application")).allowed, false);
+  assert.equal(
+    evaluateScope(scope, request("GET", "https://example.test/application")).allowed,
+    false,
+  );
 });
 
 test("method must be allowed", () => {
   const scope = makeScope({
-    targets: [
-      { host: "example.test", scheme: "https", port: 443, paths: ["/"], methods: ["GET"] },
-    ],
+    targets: [{ host: "example.test", scheme: "https", port: 443, paths: ["/"], methods: ["GET"] }],
   });
   assert.equal(evaluateScope(scope, request("POST", "https://example.test/")).allowed, false);
 });

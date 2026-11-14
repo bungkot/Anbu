@@ -5,11 +5,16 @@
   "type": "module",
   "description": "Authorized agentic TypeScript web security pentester using the OpenCode SDK, Ollama, and the OWASP Top 10:2025 methodology",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run test",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "doctor": "tsx src/index.ts doctor",
@@ -26,11 +31,18 @@
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.90",
     "@opencode-ai/sdk": "1.19.5",
-    "opencode-ai": "1.19.5"
+    "opencode-ai": "1.19.5",
+    "parse5": "^8.1.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.2"
   }
 }

@@ -27,11 +27,12 @@ a scope and refuse out-of-scope or unauthorized runs before any network call:
 - `npm run intake -- --scope scope/example.json` — validates a scope document
   and its authorization, with clear refusal reasons and a non-zero exit code.
 - `npm run test` — runs the unit suite (scope, guardrails, authorization,
-  rate limits, audit chain, intake).
+  rate limits, audit chain, intake, guarded HTTP, crawl).
 
-The tool layer, OWASP checks, agentic loop, evidence store, and reports are
-planned and tracked in [`ROADMAP.md`](ROADMAP.md). Until then, the `pentest`,
-`recon`, and `report` commands do not exist yet.
+The guarded HTTP client and read-only crawler are implemented; the evidence
+store, OWASP checks, agentic loop, and reports are planned and tracked in
+[`ROADMAP.md`](ROADMAP.md). Until then, the `pentest`, `recon`, and `report`
+commands do not exist yet.
 
 ## How it works
 

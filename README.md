@@ -1,21 +1,23 @@
-# Anbu
+# ANBU - ANomaly-Based Understanding
 
 **Agentic web security pentester** — a TypeScript engine that runs a bounded
 agent loop over an authorized target and maps findings to the
 [OWASP Top 10:2025](https://owasp.org/Top10/2025/).
 
-Anbu combines deterministic, auditable security checks with LLM-guided
-reasoning. It is a defensive security tool: it only tests systems you are
-explicitly authorized to test, captures evidence for every finding, and keeps a
-human in the loop for anything state-changing or destructive.
+ANBU combines deterministic, auditable security checks with LLM-guided
+reasoning. It assesses web applications by examining their normal behavior and
+identifying anomalies, suspicious requests, and potential vulnerabilities.
+Designed for defensive security, ANBU tests only systems you are explicitly
+authorized to assess, records evidence for every finding, and keeps a human in
+the loop for any state-changing or destructive action.
 
-> **Authorization is mandatory.** Do not run Anbu against any host, range, or
+> **Authorization is mandatory.** Do not run ANBU against any host, range, or
 > application without written permission from the asset owner. See
 > [`docs/scope-and-authorization.md`](docs/scope-and-authorization.md).
 
 ## Project status
 
-Anbu is in the scaffolding phase (M0). The repository already builds and runs
+ANBU is in the scaffolding phase (M0). The repository already builds and runs
 the local Ollama/OpenCode integration:
 
 - `npm run doctor` — verifies Docker, Ollama, and the pinned model.
@@ -39,9 +41,9 @@ authorized scope
 │  forms,     │   │  OWASP checks│   │  HTTP tools │
 │  tech stack │   │  (A01-A10)   │   │  + checks   │
 └─────────────┘   └──────────────┘   └──────┬──────┘
-                                           │
-      ┌─────────────┐   ┌──────────────┐   │
-      │  report     │◀──│  verify      │◀──┘
+                                            │
+      ┌─────────────┐   ┌──────────────┐    │
+      │  report     │◀──│  verify      │◀───┘
       │  Markdown / │   │  reproduce,  │
       │  JSON/SARIF │   │  kill FPs    │
       └─────────────┘   └──────────────┘
@@ -52,8 +54,8 @@ responses are always treated as untrusted data, never as instructions.
 
 ## OWASP Top 10:2025 coverage
 
-| ID | Category |
-|---|---|
+| ID  | Category |
+|-----|----------|
 | A01 | Broken Access Control |
 | A02 | Security Misconfiguration |
 | A03 | Software Supply Chain Failures |
@@ -74,7 +76,7 @@ responses are always treated as untrusted data, never as instructions.
 ## Quick start
 
 ```bash
-git clone <repo> && cd anbu
+git clone <repo> && cd ANBU
 ./scripts/bootstrap.sh          # Docker memory check, .env, Ollama, model pull
 npm install
 npm run doctor                  # verify Ollama + model

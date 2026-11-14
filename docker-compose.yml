@@ -1,0 +1,40 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "127.0.0.1:11434:11434"   # localhost only; safe for dev
+    environment:
+      OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-8192}
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: "1"        # memory saving
+      OLLAMA_MAX_LOADED_MODELS: "1"   # memory saving
+      OLLAMA_FLASH_ATTENTION: "1"     # saves KV cache memory
+      OLLAMA_KV_CACHE_TYPE: q8_0      # 8-bit KV cache (requires flash attention)
+    volumes:
+      - ollama:/root/.ollama
+    mem_limit: ${OLLAMA_MEM_LIMIT:-2.5g}
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # TypeScript application (profile "app"): docker compose --profile app run --rm app ask "..."
+  app:
+    build:
+      context: .
+      target: runtime
+    profiles: ["app"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:2b-q4_K_M}
+    volumes:
+      - ./workspace:/workspace
+    mem_limit: ${APP_MEM_LIMIT:-1.5g}
+
+volumes:
+  ollama:

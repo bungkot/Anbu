@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  # CI-only model: NVIDIA Nemotron-3-Nano 4B (dense, ~2.8 GB on disk).
+  # Agentic model with native tool calling + thinking, 256K native context.
+  # Chosen over the previous CI model (rafw007/glm-4.7-flash-opencode, GLM-4.7-Flash
+  # MoE 30B total / 3B active, 19 GB, needed a 12 GB swap on the 16 GB runner):
+  # - fits in RAM, no swap step needed
+  # - ~7x smaller download, CI runs several minutes faster
+  # - same OpenCode use case (tools + thinking) at a size class matching the
+  #   local default (qwen3.5:2b-q4_K_M)
+  OLLAMA_MODEL: nemotron-3-nano:4b
+  OLLAMA_CONTEXT_LENGTH: "8192"
+  OLLAMA_KEEP_ALIVE: 5m
+  OLLAMA_NUM_PARALLEL: "1"
+  OLLAMA_MAX_LOADED_MODELS: "1"
+  OLLAMA_FLASH_ATTENTION: "1"
+  OLLAMA_KV_CACHE_TYPE: "q8_0"
+  OLLAMA_BASE_URL: http://127.0.0.1:11434/v1
+  NO_PROXY: localhost,127.0.0.1
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama
+        run: |
+          nohup ollama serve > /tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+              echo "Ollama is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Ollama is not responding"
+          cat /tmp/ollama.log
+          exit 1
+
+      - name: Pull model
+        run: ollama pull "$OLLAMA_MODEL"
+
+      - name: Doctor
+        run: npm run doctor
+
+      - name: Smoke test (ask)
+        run: 'npm run ask -- "Reply with exactly one word: OK"'

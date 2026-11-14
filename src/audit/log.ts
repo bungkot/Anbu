@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import type { ApprovalMode } from "../agent/approval.js";
 
 export interface AuditDetails {
   decision?: "allow" | "deny";
@@ -26,6 +27,8 @@ export interface AuditDetails {
   targets?: string[];
   /** Stop reason for run lifecycle entries. */
   stopReason?: string;
+  /** How state-changing approvals were resolved for the run. */
+  approvalMode?: ApprovalMode;
 }
 
 export interface AuditEntry {
@@ -38,6 +41,7 @@ export interface AuditEntry {
   method?: string;
   target?: string;
   evidenceId?: string;
+  approvalMode?: ApprovalMode;
   prevHash: string;
   hash: string;
 }

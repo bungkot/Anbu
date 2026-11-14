@@ -9,6 +9,7 @@ import { RateLimiter } from "./guardrails/rate-limit.js";
 import { runRecon } from "./recon.js";
 import type { AttackSurfaceSummary } from "./recon.js";
 import { pentestCommand } from "./pentest.js";
+import { reportCommand } from "./report.js";
 
 async function doctor(): Promise<void> {
   console.log(`Ollama root : ${ollamaRoot()}`);
@@ -248,9 +249,11 @@ async function main(): Promise<void> {
       return reconCommand(rest);
     case "pentest":
       return pentestCommand(rest);
+    case "report":
+      return reportCommand(rest);
     default:
       console.log(
-        'Commands: doctor | ask "<prompt>" | intake --scope <file> | recon --scope <file> | pentest --scope <file>',
+        'Commands: doctor | ask "<prompt>" | intake --scope <file> | recon --scope <file> | pentest --scope <file> | report --run <dir>',
       );
   }
 }

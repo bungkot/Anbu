@@ -22,6 +22,7 @@
     "intake": "tsx src/index.ts intake",
     "recon": "tsx src/index.ts recon",
     "pentest": "tsx src/index.ts pentest",
+    "report": "tsx src/index.ts report",
     "test": "node scripts/test.mjs test/unit",
     "stack:build": "docker compose build app",
     "stack:up": "docker compose up -d",

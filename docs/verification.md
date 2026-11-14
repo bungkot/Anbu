@@ -114,7 +114,8 @@ Track per release:
 `.github/workflows/ci.yml` runs on every push, pull request, weekly schedule,
 and manual dispatch:
 
-- `npm run typecheck`, `npm run lint`, and `npm run build`.
+- `npm run typecheck`, `npm run lint`, `npm run format:check`, and
+  `npm run build`.
 - `npm run test:all` (unit, integration, target, report).
 - `npm run audit` (`npm audit --audit-level=high`) for the project's own
   dependency tree (A03).

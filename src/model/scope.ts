@@ -23,6 +23,20 @@ export const OWASP_CATEGORIES = [
 ] as const;
 export type OwaspCategory = (typeof OWASP_CATEGORIES)[number];
 
+/** Official OWASP Top 10:2025 names, used verbatim in prompts and reports. */
+export const OWASP_CATEGORY_NAMES: Record<OwaspCategory, string> = {
+  A01: "Broken Access Control",
+  A02: "Security Misconfiguration",
+  A03: "Software Supply Chain Failures",
+  A04: "Cryptographic Failures",
+  A05: "Injection",
+  A06: "Insecure Design",
+  A07: "Authentication Failures",
+  A08: "Software or Data Integrity Failures",
+  A09: "Security Logging and Alerting Failures",
+  A10: "Mishandling of Exceptional Conditions",
+};
+
 export type Scheme = "http" | "https";
 
 export interface Authorization {

@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config } from "../config.js";
 import { AuditLog } from "../audit/log.js";
 import { RateLimiter } from "../guardrails/rate-limit.js";
-import type { BudgetStatus, CoverageEntry, Report } from "../model/report.js";
+import type { AuditSummary, BudgetStatus, CoverageEntry, Methodology, Report } from "../model/report.js";
+import { REPORT_VERSION } from "../model/report.js";
 import type { Finding } from "../model/finding.js";
 import type { OwaspCategory, Scope } from "../model/scope.js";
 import { OWASP_CATEGORIES } from "../model/scope.js";
+import { buildMethodology, renderMarkdown, renderSarif } from "../report/index.js";
 import { intake } from "../intake.js";
 import { defaultStartUrls, runRecon } from "../recon.js";
 import type { AttackSurfaceSummary } from "../recon.js";
@@ -16,7 +19,7 @@ import type { HttpRequestInput } from "../tools/http.js";
 import { CHECKS, getCheck } from "../tools/checks/index.js";
 import type { Check, CheckInput, CheckResult } from "../tools/checks/types.js";
 import { createCheckContext } from "../tools/checks/context.js";
-import type { ApprovalProvider } from "./approval.js";
+import type { ApprovalMode, ApprovalProvider } from "./approval.js";
 import { denyAllApprovals } from "./approval.js";
 import { RunContext } from "./context.js";
 import { resolveBudgetLimits } from "./budget.js";
@@ -24,6 +27,7 @@ import type { StopReason } from "./budget.js";
 import { OpenCodePlannerTransport, Planner } from "./planner.js";
 import type { PlannerAction, PlannerTransport } from "./planner.js";
 import { buildSystemPrompt, buildUserPrompt } from "./prompts.js";
+import { verifyFindings } from "./verify.js";
 
 export interface PentestOptions {
   scopePath: string;
@@ -39,11 +43,15 @@ export interface PentestOptions {
   maxUrls?: number;
   maxActionsPerPlan?: number;
   maxInputsPerCheck?: number;
+  /** Maximum check re-runs during the verify state. Default 25. */
+  maxReproductions?: number;
   guardrailStreakLimit?: number;
   toolFailureStreakLimit?: number;
   /** Backoff after a rate-limit denial. Default 250ms; set 0 to disable. */
   throttleDelayMs?: number;
   approval?: ApprovalProvider;
+  /** Records how state-changing approvals are resolved in the audit log. */
+  approvalMode?: ApprovalMode;
 }
 
 export interface PentestRunResult {
@@ -57,6 +65,8 @@ export interface PentestRunResult {
   coverage: CoverageEntry[];
   budgets: BudgetStatus;
   report: Report;
+  /** Run directory holding report.json, report.md, report.sarif, and audit.log. */
+  reportDir: string;
   summary?: AttackSurfaceSummary;
 }
 
@@ -120,16 +130,23 @@ function configBudgetStatus(): BudgetStatus {
   };
 }
 
+function emptyAudit(path: string): AuditSummary {
+  return { path, entries: 0, integrity: "unknown", events: [] };
+}
+
 function failureResult(errors: string[]): PentestRunResult {
   const budgets = configBudgetStatus();
   const report: Report = {
+    reportVersion: REPORT_VERSION,
     runId: "(not started)",
     scopeReference: "(unknown)",
     generatedAt: new Date().toISOString(),
+    methodology: buildMethodology(false, CHECKS.length),
     findings: [],
     coverage: [],
     budgets,
     stopReason: "human_stop",
+    audit: emptyAudit("(not started)"),
   };
   return {
     ok: false,
@@ -142,6 +159,7 @@ function failureResult(errors: string[]): PentestRunResult {
     coverage: [],
     budgets,
     report,
+    reportDir: "(not started)",
   };
 }
 
@@ -160,6 +178,19 @@ function minimalAttackSurface(scope: Scope, maxDepth: number, maxUrls: number): 
     maxDepth,
     maxUrls,
   };
+}
+
+/**
+ * Write the canonical JSON record plus the human- and machine-readable views.
+ * `report.json` keeps every finding (including discarded candidates); the
+ * rendered Markdown and SARIF views only include confirmed and probable
+ * findings unless the caller explicitly asks for the full set.
+ */
+async function writeReportFiles(evidenceRoot: string, report: Report): Promise<void> {
+  await mkdir(evidenceRoot, { recursive: true });
+  await writeFile(join(evidenceRoot, "report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await writeFile(join(evidenceRoot, "report.md"), renderMarkdown(report), "utf8");
+  await writeFile(join(evidenceRoot, "report.sarif"), renderSarif(report), "utf8");
 }
 
 function candidateUrls(summary: AttackSurfaceSummary): string[] {
@@ -346,15 +377,25 @@ function applyStatus(
 }
 
 function buildCoverage(ctx: RunContext, scope: Scope): CoverageEntry[] {
+  const checksByCategory = new Map<OwaspCategory, number>();
+  for (const checkId of ctx.executedChecks) {
+    const check = getCheck(checkId);
+    if (check === undefined) continue;
+    for (const category of check.metadata.categories) {
+      checksByCategory.set(category, (checksByCategory.get(category) ?? 0) + 1);
+    }
+  }
+
   return OWASP_CATEGORIES.map((category: OwaspCategory) => {
     if (!scope.testClasses.includes(category)) {
-      return { category, status: "not_applicable", findings: 0 };
+      return { category, status: "not_applicable", findings: 0, checks: 0 };
     }
     const findings = ctx.findings.filter((finding) => finding.category === category).length;
+    const checks = checksByCategory.get(category) ?? 0;
     if (ctx.executedCategories.has(category)) {
-      return { category, status: "covered", findings };
+      return { category, status: "covered", findings, checks };
     }
-    return { category, status: "not_run", findings };
+    return { category, status: "not_run", findings, checks };
   });
 }
 
@@ -446,6 +487,7 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
   await audit.append("run.start", {
     scope: scope.name,
     authorization: scope.authorization.reference,
+    approvalMode: options.approvalMode ?? "deny-all",
     targets: scope.targets.map((target) => target.host),
   });
 
@@ -534,21 +576,47 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
   if (ctx.stopReason === undefined) ctx.stop("completed");
   const stopReason: StopReason = ctx.stopReason ?? "completed";
 
+  // Verify state: reproduce candidates before anything is reported.
+  await verifyFindings({
+    findings: ctx.findings,
+    scope,
+    store,
+    client,
+    audit,
+    approval,
+    now,
+    maxReproductions: options.maxReproductions,
+  });
+
   const budgets = ctx.budget.status();
   const coverage = buildCoverage(ctx, scope);
-  const report: Report = {
-    runId,
-    scopeReference: scope.authorization.reference,
-    generatedAt: now().toISOString(),
-    findings: ctx.findings,
-    coverage,
-    budgets,
-    stopReason,
-  };
+  const methodology: Methodology = buildMethodology(ctx.modelAvailable, CHECKS.length);
   await audit.append("run.end", {
     stopReason,
     findings: ctx.findings.length,
   });
+  const auditVerification = await audit.verify();
+  const auditSummary: AuditSummary = {
+    path: join(evidenceRoot, "audit.log"),
+    entries: auditVerification.entries,
+    integrity: auditVerification.ok ? "ok" : "failed",
+    brokenAt: auditVerification.brokenAt,
+    events: [...audit.list()],
+  };
+  const report: Report = {
+    reportVersion: REPORT_VERSION,
+    runId,
+    scopeReference: scope.authorization.reference,
+    generatedAt: now().toISOString(),
+    methodology,
+    findings: ctx.findings,
+    coverage,
+    budgets,
+    stopReason,
+    audit: auditSummary,
+  };
+
+  await writeReportFiles(evidenceRoot, report);
 
   if (ownsTransport && transport !== undefined) {
     await transport.stop().catch(() => undefined);
@@ -564,6 +632,7 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
     coverage,
     budgets,
     report,
+    reportDir: evidenceRoot,
     summary: attackSurface,
   };
 }

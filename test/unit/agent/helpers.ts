@@ -149,6 +149,7 @@ export async function makeRunContext(options: {
   scope?: Scope;
   limits?: Partial<BudgetLimits>;
   fetchFn?: typeof fetch;
+  env?: (name: string) => string | undefined;
 } = {}): Promise<{ ctx: RunContext; dir: string }> {
   const scope = options.scope ?? makeScope();
   const dir = await mkdtemp(join(tmpdir(), "anbu-agent-ctx-"));
@@ -163,6 +164,7 @@ export async function makeRunContext(options: {
     rateLimiter,
     audit,
     fetchFn: options.fetchFn ?? (async () => new Response("<html></html>")),
+    env: options.env,
   });
   const limits: BudgetLimits = { ...resolveBudgetLimits(scope), ...options.limits };
   const ctx = new RunContext({

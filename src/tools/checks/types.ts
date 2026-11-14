@@ -203,6 +203,7 @@ export function makeFinding(
     severity: candidate.severity ?? metadata.severity,
     confidence: candidate.confidence ?? "probable",
     status: "candidate",
+    checkId: metadata.id,
     title: candidate.title,
     affected: candidate.affected,
     evidence: [...evidence],

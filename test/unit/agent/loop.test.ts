@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PentestOptions, PentestRunResult } from "../../../src/agent/loop.js";
@@ -227,6 +227,49 @@ test("every reported finding has evidence and reproduction steps", async () => {
     ),
     "expected a SQL injection finding",
   );
+});
+
+test("writes all report formats after verifying candidates", async () => {
+  const page = '<html><body><a href="/search?q=1">search</a></body></html>';
+  const { result, dir } = await runLoop({
+    scope: loopScope({ testClasses: ["A05"] }),
+    modelEnabled: false,
+    maxDepth: 1,
+    maxUrls: 5,
+    maxInputsPerCheck: 2,
+    fetchHandler: async (url) => {
+      if (url.includes("/search") && (url.includes("%27") || url.includes("'"))) {
+        return new Response("You have an error in your SQL syntax", { status: 500 });
+      }
+      return new Response(page, { status: 200, headers: { "content-type": "text/html" } });
+    },
+  });
+
+  assert.equal(result.reportDir, join(dir, "loop-test"));
+  const files = await readdir(result.reportDir);
+  for (const name of ["report.json", "report.md", "report.sarif", "audit.log"]) {
+    assert.ok(files.includes(name), `expected ${name} in the run directory`);
+  }
+
+  for (const finding of result.findings) {
+    assert.notEqual(finding.status, "candidate");
+    assert.ok(finding.verification !== undefined, `${finding.title} was not verified`);
+  }
+  assert.equal(result.report.audit.integrity, "ok");
+
+  const markdown = await readFile(join(result.reportDir, "report.md"), "utf8");
+  assert.match(markdown, /# Anbu Pentest Report/);
+  assert.match(markdown, /## Methodology/);
+  assert.match(markdown, /## Coverage/);
+  assert.match(markdown, /## Budgets/);
+  assert.match(markdown, /## Audit log/);
+  assert.doesNotMatch(markdown, /Discarded candidate/);
+
+  const sarif = JSON.parse(
+    await readFile(join(result.reportDir, "report.sarif"), "utf8"),
+  ) as { version: string; runs: Array<{ results: unknown[] }> };
+  assert.equal(sarif.version, "2.1.0");
+  assert.ok(Array.isArray(sarif.runs[0].results));
 });
 
 test("repeated planner failures disable the model and still produce a report", async () => {

@@ -1,20 +1,8 @@
-import type { OwaspCategory } from "../model/scope.js";
+import { OWASP_CATEGORY_NAMES } from "../model/scope.js";
 import { CHECKS } from "../tools/checks/index.js";
 import type { RunContext } from "./context.js";
 
-/** Official OWASP Top 10:2025 names, used verbatim in prompts and reports. */
-export const OWASP_CATEGORY_NAMES: Record<OwaspCategory, string> = {
-  A01: "Broken Access Control",
-  A02: "Security Misconfiguration",
-  A03: "Software Supply Chain Failures",
-  A04: "Cryptographic Failures",
-  A05: "Injection",
-  A06: "Insecure Design",
-  A07: "Authentication Failures",
-  A08: "Software or Data Integrity Failures",
-  A09: "Security Logging and Alerting Failures",
-  A10: "Mishandling of Exceptional Conditions",
-};
+export { OWASP_CATEGORY_NAMES };
 
 const SENSITIVE_QUERY_KEYS = new Set([
   "access_token",

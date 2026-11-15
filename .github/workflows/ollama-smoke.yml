@@ -178,6 +178,16 @@ jobs:
           grep -qi "ok" "$RUNNER_TEMP/ask.txt" || status=1
           exit "$status"
 
+      - name: Stage 1 - Verify LLM backlog
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          backlog="workspace/evidence/llm/exchanges.jsonl"
+          test -s "$backlog"
+          node scripts/ci-metrics.mjs transcript "$backlog" "$metrics/llm-ask.json"
+          test -s workspace/evidence/llm/backlog.md
+
       - name: Show loaded model
         run: ollama ps
 
@@ -250,6 +260,22 @@ jobs:
         if: always() && env.STAGE == 'model' && steps.model.outcome != 'skipped'
         run: node scripts/ci-metrics.mjs result "$RUNNER_TEMP/metrics/model-pentest.json"
 
+      - name: Stage 3 - Verify LLM backlog
+        if: always() && env.STAGE == 'model' && steps.model.outcome != 'skipped'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          metrics="$RUNNER_TEMP/metrics"
+          mkdir -p "$metrics"
+          backlog_dir="$(ls -dt workspace/evidence/*/llm 2>/dev/null | head -n 1 || true)"
+          if [ -z "$backlog_dir" ]; then
+            echo "No model-run LLM backlog directory was produced" >&2
+            exit 1
+          fi
+          test -s "$backlog_dir/backlog.md"
+          node scripts/ci-metrics.mjs transcript "$backlog_dir/exchanges.jsonl" "$metrics/llm-model.json"
+          echo "LLM backlog: $backlog_dir/backlog.md"
+
       - name: Publish stage summary
         if: always()
         env:
@@ -270,6 +296,17 @@ jobs:
             ${{ runner.temp }}/metrics
             ${{ runner.temp }}/ollama.log
             ${{ runner.temp }}/ask.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload LLM backlog
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: anbu-llm-backlog-${{ github.run_id }}
+          path: |
+            workspace/evidence/llm
+            workspace/evidence/*/llm
           if-no-files-found: warn
           retention-days: 14
 

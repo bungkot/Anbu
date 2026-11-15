@@ -136,8 +136,10 @@ the model, benchmarks load/prompt/generation throughput, and runs `doctor` plus
 `ask`. Stage 2 runs a read-only deterministic pentest against a digest-pinned
 Juice Shop container. Stage 3 runs the planner against the same target with a
 two-turn budget; it is experimental and non-blocking because a CPU-only runner
-can exceed the SDK planner timeout. The job summary reports the metrics, and the
-evidence plus metrics directory is uploaded as an artifact. The workflow stays
+can exceed the SDK planner timeout. Both model stages verify that every LLM
+exchange was written to `llm/backlog.md` and `llm/exchanges.jsonl`, the job
+summary reports exchange counts, and a dedicated LLM backlog artifact is
+uploaded alongside the evidence and metrics directory. The workflow stays
 off the per-push path because both the Ollama archive and the model are
 multi-gigabyte downloads. See [`ci-ollama-smoke.md`](ci-ollama-smoke.md) for the
 stage selection, resource budget, pins, and local reproduction steps.

@@ -187,8 +187,9 @@ SBOM), and `ollama-smoke.yml` on manual dispatch and a weekly schedule. The
 latter installs a pinned Ollama release, pulls `dolphin3:8b`, and runs three
 stages: a measured model smoke test, a read-only deterministic pentest against
 Juice Shop, and an experimental model-guided pentest. Stage 1 reports load and
-token throughput; stages 2 and 3 add request, model-turn, and timing metrics to
-the job summary. See [`docs/ci-ollama-smoke.md`](docs/ci-ollama-smoke.md) for
+token throughput; stages 2 and 3 add request, model-turn, timing, and LLM
+backlog metrics to the job summary, and upload the prompt/response backlog as a
+dedicated artifact. See [`docs/ci-ollama-smoke.md`](docs/ci-ollama-smoke.md) for
 stage selection and limits.
 
 ```bash

@@ -51,9 +51,10 @@ Stage 1 writes concrete CPU-inference numbers to the job summary and to the
 - End-to-end `ask` wall time.
 
 Stages 2 and 3 add wall time, request budget usage, model-turn usage, stop
-reason, whether the planner was used, and reported/withheld findings. The
-summary is rendered as a Markdown table on the workflow run page, so performance
-changes are visible without reading raw logs.
+reason, whether the planner was used, and reported/withheld findings. The same
+summary also reports the LLM backlog exchange count, including failed planner
+attempts. The summary is rendered as a Markdown table on the workflow run page,
+so performance changes are visible without reading raw logs.
 
 Stage 1 calls `/api/generate` directly before `ask`. That warms the model and
 measures it independently of OpenCode overhead. `ask` then measures the full
@@ -67,8 +68,11 @@ SDK path.
 - Anbu validates an explicit scope and completes a read-only deterministic
   pentest against an ephemeral OWASP Juice Shop container.
 - The planner can run against the same target with a hard model-turn budget.
-- Evidence, metrics, the Ollama log, and the model answer are uploaded as
-  artifacts.
+- Every `ask` prompt and every planner turn is recorded in `backlog.md` plus
+  `exchanges.jsonl`; the workflow validates both files and fails the blocking
+  smoke stage if the `ask` transcript is missing or empty.
+- Evidence, metrics, the Ollama log, the model answer, and a dedicated LLM
+  backlog artifact are uploaded for later study.
 
 Stage 3 is experimental and non-blocking. A CPU-only runner can exceed the
 SDK's 300-second planner request timeout, which is the same failure mode seen on
@@ -109,12 +113,14 @@ remaining installation with `ollama --version`.
 6. Put `node_modules/.bin` on `PATH` so the embedded OpenCode server can find
    the local `opencode` CLI (with a pinned global install as fallback).
 7. Run `doctor`.
-8. Stage 1: benchmark `/api/generate`, then `ask`.
+8. Stage 1: benchmark `/api/generate`, then `ask`, and validate the resulting
+   `workspace/evidence/llm/backlog.md` and `exchanges.jsonl`.
 9. Stage 2: start Juice Shop, validate scope, then `pentest --no-model`.
 10. Stage 3: run `pentest` with the planner; the scope caps it at two model
-    turns. Print a compact model-assisted/stop-reason/turn summary to the log.
-11. Render the stage summary, upload evidence and metrics, and always stop
-    Juice Shop and Ollama.
+    turns. Print a compact model-assisted/stop-reason/turn summary and validate
+    the run's `llm/` backlog, including planner failures.
+11. Render the stage summary, upload evidence, metrics, and the dedicated LLM
+    backlog artifact, and always stop Juice Shop and Ollama.
 
 ## Scope and authorization
 

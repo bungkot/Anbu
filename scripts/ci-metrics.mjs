@@ -4,6 +4,7 @@
  * Usage:
  *   node scripts/ci-metrics.mjs benchmark <ollama-response.json> <out.json> <wall-ms>
  *   node scripts/ci-metrics.mjs timing <out.json> <wall-ms>
+ *   node scripts/ci-metrics.mjs transcript <exchanges.jsonl> <out.json>
  *   node scripts/ci-metrics.mjs summary <metrics-dir>
  *   node scripts/ci-metrics.mjs result <pentest-report.json>
  */
@@ -58,6 +59,50 @@ function timing([outPath, wallMs]) {
   writeFileSync(outPath, `${JSON.stringify({ seconds: round(Number(wallMs) / 1000) }, null, 2)}\n`);
 }
 
+function transcript([inputPath, outPath]) {
+  if (inputPath === undefined || outPath === undefined) {
+    throw new Error("transcript requires <exchanges.jsonl> <out.json>");
+  }
+  const lines = readFileSync(inputPath, "utf8")
+    .split("\n")
+    .filter((line) => line.trim().length > 0);
+  if (lines.length === 0) {
+    throw new Error(`transcript ${inputPath} has no exchanges`);
+  }
+  const exchanges = lines.map((line, index) => {
+    try {
+      return JSON.parse(line);
+    } catch {
+      throw new Error(`invalid JSONL in ${inputPath} at line ${index + 1}`);
+    }
+  });
+  const errors = exchanges.filter((exchange) => exchange.ok !== true).length;
+  const agents = [
+    ...new Set(
+      exchanges
+        .map((exchange) => exchange.agent)
+        .filter((agent) => typeof agent === "string" && agent.length > 0),
+    ),
+  ];
+  const metrics = {
+    exchanges: exchanges.length,
+    ok: exchanges.length - errors,
+    errors,
+    agents,
+    totalDurationMs: exchanges.reduce(
+      (sum, exchange) => sum + (typeof exchange.durationMs === "number" ? exchange.durationMs : 0),
+      0,
+    ),
+    firstTimestamp: exchanges[0].timestamp ?? null,
+    lastTimestamp: exchanges.at(-1).timestamp ?? null,
+  };
+  writeFileSync(outPath, `${JSON.stringify(metrics, null, 2)}\n`);
+  console.log(
+    `LLM transcript  : ${metrics.exchanges} exchanges (${metrics.ok} ok, ` +
+      `${metrics.errors} error) from ${metrics.agents.join(", ") || "unknown"}`,
+  );
+}
+
 function result([reportPath]) {
   if (reportPath === undefined) throw new Error("result requires <pentest-report.json>");
   let report;
@@ -103,6 +148,15 @@ function askCell(metrics) {
   return metrics === undefined ? "n/a" : `${number(metrics.seconds)} s end-to-end`;
 }
 
+function transcriptCell(metrics) {
+  if (metrics === undefined) return "n/a";
+  const agents =
+    Array.isArray(metrics.agents) && metrics.agents.length > 0
+      ? metrics.agents.join(", ")
+      : "unknown";
+  return `${metrics.exchanges} exchanges (${metrics.ok} ok, ${metrics.errors} error) from ${agents}`;
+}
+
 function pentestCell(report, timingMetrics) {
   if (report === undefined) return "n/a";
   const budgets = report.budgets ?? {};
@@ -127,6 +181,8 @@ function summary([dir]) {
   const deterministicTime = readTiming(dir, "deterministic-seconds.json");
   const model = readTiming(dir, "model-pentest.json");
   const modelTime = readTiming(dir, "model-seconds.json");
+  const llmAsk = readTiming(dir, "llm-ask.json");
+  const llmModel = readTiming(dir, "llm-model.json");
   const stage = process.env.STAGE ?? "model";
 
   console.log("## Ollama staged CI");
@@ -149,6 +205,11 @@ function summary([dir]) {
     `| 3. Model-guided pentest | ${outcome(process.env.MODEL_OUTCOME)} | ` +
       `${pentestCell(model, modelTime)} |`,
   );
+  const llmRecorded = llmAsk !== undefined || llmModel !== undefined;
+  console.log(
+    `| LLM backlog | ${llmRecorded ? "recorded" : "not run"} | ` +
+      `ask: ${transcriptCell(llmAsk)}; model: ${transcriptCell(llmModel)} |`,
+  );
   console.log("");
   if (stage === "model") {
     console.log(
@@ -162,9 +223,10 @@ const [command, ...args] = process.argv.slice(2);
 try {
   if (command === "benchmark") benchmark(args);
   else if (command === "timing") timing(args);
+  else if (command === "transcript") transcript(args);
   else if (command === "summary") summary(args);
   else if (command === "result") result(args);
-  else throw new Error("expected one of: benchmark | timing | summary | result");
+  else throw new Error("expected one of: benchmark | timing | transcript | summary | result");
 } catch (err) {
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);

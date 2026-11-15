@@ -169,6 +169,7 @@ setup (see `.devcontainer/devcontainer.json` and
 - [Scope and authorization](docs/scope-and-authorization.md)
 - [Threat model](docs/threat-model.md)
 - [Tool reference](docs/tool-reference.md)
+- [Reading a report](docs/reading-a-report.md)
 - [Verification](docs/verification.md)
 - [Ollama staged model tests](docs/ci-ollama-smoke.md)
 - [Troubleshooting](docs/troubleshooting.md)

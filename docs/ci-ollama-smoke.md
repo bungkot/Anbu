@@ -78,9 +78,11 @@ Stages 1 and 2 remain the release-relevant gates.
 
 ## Runner assumptions
 
-The workflow targets the standard public-repository `ubuntu-latest` runner
-(4 vCPU, 16 GB RAM, 14 GB SSD). Private repositories receive a smaller runner,
-so model calls will be slower and the job may need a longer timeout.
+The workflow pins the public-repository `ubuntu-24.04` runner (4 vCPU, 16 GB
+RAM, 14 GB SSD) instead of the floating `ubuntu-latest` label, so the resource
+profile stays stable across Ubuntu image migrations. Private repositories
+receive a smaller runner, so model calls will be slower and the job may need a
+longer timeout.
 
 | Resource | Choice | Reason |
 | --- | --- | --- |

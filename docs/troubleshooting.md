@@ -15,6 +15,9 @@
 | Evidence directory grows quickly | Large bodies or many requests | Lower `maxBodyBytes` and `maxRequests`; prune old runs. |
 | `docker: dubious ownership` in dev container | Mount UID mismatch | Already handled via `safe.directory` in the Dockerfile. |
 | Port 4096 in use | Another OpenCode server | Set `OPENCODE_PORT` or stop the other server. |
+| Live planner reports `Model : unavailable` with `spawn opencode ENOENT` in the audit log (Windows host) | `findOpencodeBinary` resolved the npm shim (`opencode.cmd`/`opencode.ps1`), which `spawn()` cannot execute without a shell | Fixed: the resolver now locates the real `opencode.exe` in the npm global prefix. If you still see it, verify `node_modules/opencode-ai/bin/opencode.exe` exists under your npm prefix. |
+| Live planner fails after ~5 minutes with `fetch failed` | OpenCode provider timeout (default 300000 ms) aborts the request while a slow CPU-bound Ollama turn is still generating | Fixed: provider `options.timeout` is set to `false` in the inline OpenCode config (`src/opencode.ts`). |
+| Live planner halts after one turn (`planner_halt`) although budget remains | Small model misjudges the remaining budget and emits `halt` early | Model behavior, not a loop bug: use a larger model for live runs, or clarify the halt-budget instruction in the planner prompt. |
 
 ## Getting help
 

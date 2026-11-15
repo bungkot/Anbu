@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
-import { closeSync, openSync, readSync, realpathSync } from "node:fs";
+import { closeSync, openSync, readSync, realpathSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { createOpencodeClient } from "@opencode-ai/sdk";
 import { config } from "./config.js";
@@ -19,7 +19,12 @@ const OPENCODE_CONFIG = {
     ollama: {
       npm: "@ai-sdk/openai-compatible",
       name: "Ollama (Docker)",
-      options: { baseURL: config.ollamaBaseUrl },
+      options: {
+        baseURL: config.ollamaBaseUrl,
+        // CPU-bound Ollama turns can exceed the 5-minute default timeout,
+        // which aborts the request with "fetch failed" mid-generation.
+        timeout: false,
+      },
       models: {
         [config.model]: { name: config.model },
       },
@@ -65,6 +70,14 @@ function isLinuxExecutable(path: string): boolean {
   }
 }
 
+function isExecutableFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
 /**
  * The dev container bind-mounts the host workspace, so `npm run` can put a
  * host `node_modules/.bin` (for example a Windows `opencode.exe`) ahead of the
@@ -72,19 +85,39 @@ function isLinuxExecutable(path: string): boolean {
  * current platform before spawning the server.
  */
 function findOpencodeBinary(): string {
-  if (process.platform !== "linux") return "opencode";
+  if (process.platform === "linux") {
+    const candidates = ["/app/node_modules/.bin/opencode", "/usr/local/bin/opencode", "/usr/bin/opencode"];
+    for (const dir of (process.env.PATH ?? "").split(":")) {
+      if (dir.length > 0) candidates.push(join(dir, "opencode"));
+    }
+    for (const candidate of candidates) {
+      if (isLinuxExecutable(candidate)) return realpathSync(candidate);
+    }
+    return "opencode";
+  }
 
-  const candidates = [
-    "/app/node_modules/.bin/opencode",
-    "/usr/local/bin/opencode",
-    "/usr/bin/opencode",
-  ];
-  for (const dir of (process.env.PATH ?? "").split(":")) {
-    if (dir.length > 0) candidates.push(join(dir, "opencode"));
+  if (process.platform === "win32") {
+    // `spawn` without a shell cannot execute the npm shim scripts
+    // (`opencode.cmd` / `opencode.ps1`), so resolve the real `opencode.exe`
+    // installed by the npm package inside the global prefix.
+    const candidates: string[] = [];
+    const npmPrefix = process.env.APPDATA === undefined ? undefined : join(process.env.APPDATA, "npm");
+    if (npmPrefix !== undefined) {
+      candidates.push(join(npmPrefix, "node_modules", "opencode-ai", "bin", "opencode.exe"));
+      candidates.push(join(npmPrefix, "opencode.exe"));
+    }
+    for (const dir of (process.env.PATH ?? "").split(";")) {
+      const trimmed = dir.trim().replace(/^"|"$/g, "");
+      if (trimmed.length > 0) {
+        candidates.push(join(trimmed, "opencode.exe"));
+        candidates.push(join(trimmed, "node_modules", "opencode-ai", "bin", "opencode.exe"));
+      }
+    }
+    for (const candidate of candidates) {
+      if (isExecutableFile(candidate)) return candidate;
+    }
   }
-  for (const candidate of candidates) {
-    if (isLinuxExecutable(candidate)) return realpathSync(candidate);
-  }
+
   return "opencode";
 }
 

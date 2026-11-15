@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Authorized agentic TypeScript web security pentester using the OpenCode SDK, Ollama, and the OWASP Top 10:2025 methodology",
+  "author": {
+    "name": "Hendra Dwi Saputra",
+    "email": "hendra@usa.com"
+  },
+  "license": "MIT",
   "engines": {
     "node": ">=20.19.0"
   },

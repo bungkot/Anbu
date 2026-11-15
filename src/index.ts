@@ -121,7 +121,7 @@ async function intakeCommand(args: string[]): Promise<void> {
     })
     .join(", ");
 
-  console.log(`Scope accepted: ${result.scope.name}`);
+  console.log(`Scope accepted : ${result.scope.name}`);
   console.log(`  Targets      : ${targets}`);
   console.log(`  Test classes : ${result.scope.testClasses.join(", ")}`);
   console.log(`  Read-only    : ${result.scope.readOnly}`);

@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { config, ollamaRoot } from "./config.js";
 import { AuditLog } from "./audit/log.js";
+import { LlmTranscript } from "./audit/llm-transcript.js";
 import { ensureModel, listModels, waitForOllama } from "./health.js";
-import { startOpencode } from "./opencode.js";
+import { ASK_AGENT_PROMPT, startOpencode } from "./opencode.js";
 import { intake } from "./intake.js";
 import { RateLimiter } from "./guardrails/rate-limit.js";
 import { runRecon } from "./recon.js";
@@ -25,11 +26,35 @@ async function ask(prompt: string): Promise<void> {
   await waitForOllama();
   await ensureModel();
 
+  const transcript = new LlmTranscript({
+    dir: join(config.evidenceDir, "llm"),
+    runId: `ask-${randomUUID()}`,
+    provider: "ollama",
+    model: config.model,
+  });
+  const startedAt = Date.now();
+  const record = async (ok: boolean, response?: string, error?: string): Promise<void> => {
+    await transcript.record({
+      agent: "ask",
+      purpose: "ask.prompt",
+      turn: 1,
+      agentPrompt: ASK_AGENT_PROMPT,
+      user: prompt,
+      startedAt,
+      durationMs: Date.now() - startedAt,
+      ok,
+      response,
+      error,
+    });
+  };
+
   const { client, server } = await startOpencode();
   try {
     const session = await client.session.create({ body: { title: "ask" } });
     if (!session.data) {
-      throw new Error(`Failed to create session: ${JSON.stringify(session.error)}`);
+      const error = `Failed to create session: ${JSON.stringify(session.error)}`;
+      await record(false, undefined, error);
+      throw new Error(error);
     }
 
     const result = await client.session.prompt({
@@ -42,7 +67,9 @@ async function ask(prompt: string): Promise<void> {
       },
     });
     if (!result.data) {
-      throw new Error(`Prompt failed: ${JSON.stringify(result.error)}`);
+      const error = `Prompt failed: ${JSON.stringify(result.error)}`;
+      await record(false, undefined, error);
+      throw new Error(error);
     }
 
     const answer = result.data.parts
@@ -50,8 +77,14 @@ async function ask(prompt: string): Promise<void> {
       .map((part) => part.text)
       .join("\n")
       .trim();
-    if (!answer) throw new Error("OpenCode returned an empty response from Ollama.");
+    if (!answer) {
+      const error = "OpenCode returned an empty response from Ollama.";
+      await record(false, undefined, error);
+      throw new Error(error);
+    }
+    await record(true, answer);
     console.log(answer);
+    console.log(`LLM backlog : ${transcript.markdownPath}`);
   } finally {
     server.close();
   }

@@ -1,6 +1,7 @@
 import { config } from "../config.js";
+import type { LlmTranscript } from "../audit/llm-transcript.js";
 import type { OwaspCategory } from "../model/scope.js";
-import { startOpencode } from "../opencode.js";
+import { PLANNER_AGENT_PROMPT, startOpencode } from "../opencode.js";
 import { getCheck } from "../tools/checks/index.js";
 import type { CheckInput } from "../tools/checks/types.js";
 import type { HttpRequestInput } from "../tools/http.js";
@@ -201,6 +202,11 @@ export function parsePlannerResponse(text: string, options: ParseOptions): Plann
   };
 }
 
+export interface OpenCodePlannerTransportOptions {
+  /** Records every prompt/response pair, e.g. for the study backlog. */
+  transcript?: LlmTranscript;
+}
+
 /**
  * Planner transport backed by the embedded OpenCode server and the local Ollama
  * model. One server and session are reused for every planner turn of a run.
@@ -208,6 +214,12 @@ export function parsePlannerResponse(text: string, options: ParseOptions): Plann
 export class OpenCodePlannerTransport implements PlannerTransport {
   private handle: Awaited<ReturnType<typeof startOpencode>> | undefined;
   private sessionId: string | undefined;
+  private readonly transcript: LlmTranscript | undefined;
+  private turn = 0;
+
+  constructor(options: OpenCodePlannerTransportOptions = {}) {
+    this.transcript = options.transcript;
+  }
 
   async start(): Promise<void> {
     if (this.handle !== undefined) return;
@@ -229,11 +241,35 @@ export class OpenCodePlannerTransport implements PlannerTransport {
   }
 
   async request(system: string, user: string): Promise<PlannerTextResult> {
+    const startedAt = Date.now();
+    const turn = (this.turn += 1);
+    const record = async (result: PlannerTextResult, durationMs: number): Promise<void> => {
+      if (this.transcript === undefined) return;
+      await this.transcript.record({
+        agent: "planner",
+        purpose: "planner.plan",
+        turn,
+        agentPrompt: PLANNER_AGENT_PROMPT,
+        system,
+        user,
+        startedAt,
+        durationMs,
+        ok: result.ok,
+        response: result.ok ? result.text : undefined,
+        error: result.ok ? undefined : result.error,
+      });
+    };
+
     if (this.handle === undefined || this.sessionId === undefined) {
-      return { ok: false, error: "planner transport is not started" };
+      const result: PlannerTextResult = {
+        ok: false,
+        error: "planner transport is not started",
+      };
+      await record(result, 0);
+      return result;
     }
     try {
-      const result = await this.handle.client.session.prompt({
+      const response = await this.handle.client.session.prompt({
         path: { id: this.sessionId },
         body: {
           model: { providerID: "ollama", modelID: config.model },
@@ -242,18 +278,38 @@ export class OpenCodePlannerTransport implements PlannerTransport {
           parts: [{ type: "text", text: `${system}\n\n${user}` }],
         },
       });
-      if (!result.data) {
-        return { ok: false, error: `planner prompt failed: ${JSON.stringify(result.error)}` };
+      const durationMs = Date.now() - startedAt;
+      if (!response.data) {
+        const result: PlannerTextResult = {
+          ok: false,
+          error: `planner prompt failed: ${JSON.stringify(response.error)}`,
+        };
+        await record(result, durationMs);
+        return result;
       }
-      const text = result.data.parts
+      const text = response.data.parts
         .filter((part) => part.type === "text")
         .map((part) => part.text)
         .join("\n")
         .trim();
-      if (text.length === 0) return { ok: false, error: "planner returned an empty response" };
-      return { ok: true, text };
+      if (text.length === 0) {
+        const result: PlannerTextResult = {
+          ok: false,
+          error: "planner returned an empty response",
+        };
+        await record(result, durationMs);
+        return result;
+      }
+      const result: PlannerTextResult = { ok: true, text };
+      await record(result, durationMs);
+      return result;
     } catch (err) {
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+      const result: PlannerTextResult = {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      await record(result, Date.now() - startedAt);
+      return result;
     }
   }
 }

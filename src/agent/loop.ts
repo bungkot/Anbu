@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config } from "../config.js";
 import { AuditLog } from "../audit/log.js";
+import { LlmTranscript } from "../audit/llm-transcript.js";
 import { RateLimiter } from "../guardrails/rate-limit.js";
 import type {
   AuditSummary,
@@ -80,6 +81,8 @@ export interface PentestRunResult {
   report: Report;
   /** Run directory holding report.json, report.md, report.sarif, and audit.log. */
   reportDir: string;
+  /** Human-readable LLM study backlog, when a live planner transport was used. */
+  llmBacklogPath?: string;
   summary?: AttackSurfaceSummary;
 }
 
@@ -464,8 +467,17 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
 
   let transport = options.transport;
   let ownsTransport = false;
+  const llmTranscript =
+    transport === undefined && options.modelEnabled !== false
+      ? new LlmTranscript({
+          dir: join(evidenceRoot, "llm"),
+          runId,
+          provider: "ollama",
+          model: config.model,
+        })
+      : undefined;
   if (transport === undefined && options.modelEnabled !== false) {
-    transport = new OpenCodePlannerTransport();
+    transport = new OpenCodePlannerTransport({ transcript: llmTranscript });
     ownsTransport = true;
   }
   let modelAvailable = false;
@@ -658,6 +670,10 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
     budgets,
     report,
     reportDir: evidenceRoot,
+    llmBacklogPath:
+      llmTranscript !== undefined && budgets.usedModelTurns > 0
+        ? llmTranscript.markdownPath
+        : undefined,
     summary: attackSurface,
   };
 }

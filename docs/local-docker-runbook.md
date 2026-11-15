@@ -5,8 +5,8 @@ SDK) using Docker Compose.
 
 ## Prerequisites
 
-- Docker Desktop running with at least ~3 GB memory available
-  (2 GB Ollama + 0.75 GB app + headroom).
+- Docker Desktop running with at least ~4 GB memory available
+  (2 GB Ollama + 1 GB app + headroom).
 - Node.js >= 20.19.0 on the host (for npm scripts and builds).
 - The compose stack uses the model `granite3.3:2b` by default (1.5 GB Q4,
   fits the 2 GB Ollama limit together with the 8192-token q8_0 KV cache).
@@ -23,7 +23,7 @@ Defaults are safe for a first run:
 | --- | --- | --- |
 | `OLLAMA_MODEL` | `granite3.3:2b` | Apache 2.0, native function calling |
 | `OLLAMA_MEM_LIMIT` | `2g` | Model + KV cache must fit |
-| `APP_MEM_LIMIT` | `0.75g` | App container |
+| `APP_MEM_LIMIT` | `1g` | App container |
 | `OLLAMA_CONTEXT_LENGTH` | `8192` | Lower to 4096 if OOM |
 | `ANBU_SCOPE_FILE` | `scope/example.json` | Placeholder scope, replace (step 5) |
 | `ANBU_EVIDENCE_DIR` | `workspace/evidence` | Evidence output |

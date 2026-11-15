@@ -47,7 +47,7 @@ services:
     volumes:
       - .:/workspace:cached
     working_dir: /workspace
-    mem_limit: ${APP_MEM_LIMIT:-0.75g}
+    mem_limit: ${APP_MEM_LIMIT:-1g}
     # Keep the container alive for the dev container and interactive exec.
     # One-off runs override the entrypoint:
     #   docker compose run --rm --entrypoint node app /app/dist/index.js ask "..."

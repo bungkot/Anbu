@@ -189,3 +189,16 @@ provider, so granting an approval can never bypass a read-only scope.
 - Guardrail violations never execute and are surfaced to the operator.
 - If the LLM is unavailable, deterministic checks continue and the report notes
   reduced coverage.
+
+## 9. LLM transcript and study backlog
+
+Every planner turn is recorded to `llm/backlog.md` and `llm/exchanges.jsonl`
+inside the run directory. Each exchange includes the provider-level agent
+prompt, the system and user prompts, the raw response or error, the turn number,
+and the duration. The `ask` command writes to
+`workspace/evidence/llm/` using the same format.
+
+The transcript is study material: it is credential-redacted best-effort,
+size-capped per field, and excluded from reports and findings. Model output is
+always treated as untrusted data. The backlog lets an operator inspect exactly
+what the planner saw and returned without changing the run's behavior.

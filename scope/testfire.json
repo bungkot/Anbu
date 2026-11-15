@@ -16,6 +16,13 @@
       "port": 443,
       "paths": ["/"],
       "methods": ["GET", "HEAD", "OPTIONS"]
+    },
+    {
+      "host": "demo.testfire.net",
+      "scheme": "http",
+      "port": 80,
+      "paths": ["/"],
+      "methods": ["GET", "HEAD", "OPTIONS"]
     }
   ],
   "deny": [],

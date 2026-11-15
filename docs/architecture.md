@@ -33,6 +33,8 @@ The architecture prioritizes four properties:
 - Mass exploitation, credential cracking at scale, or evasion of detection.
 - Testing systems without explicit permission.
 - Replacing manual review; the report is an input to a human process.
+- Shipping a target application; the engine tests systems you provide and
+  authorize.
 
 ## 3. Component diagram
 
@@ -209,3 +211,34 @@ can be configured to halt on repeated violations.
 - **Dev container**: open the folder in VS Code and use "Reopen in Container";
   the repository is mounted at `/workspace`.
 - Ollama is bound to `127.0.0.1` only; no target data leaves the machine.
+
+## 11. Targets and runtime servers
+
+Anbu is the testing engine, not the target. The repository ships no target web
+application. Three kinds of server appear around the engine, with different
+roles:
+
+| Server | Where | Role |
+|---|---|---|
+| Target application | Outside the repository | The system under test; for example OWASP Juice Shop started with `docker run`. |
+| Ollama | `docker-compose.yml` (`ollama` service) | Local LLM inference for the planner, bound to `127.0.0.1:11434`. |
+| Test fixtures | `test/target/fixture.ts`, `test/integration/helpers.ts` | Deliberately vulnerable HTTP servers bound to `127.0.0.1` on an ephemeral port, started only by the test suites. |
+
+The `app` service in `docker-compose.yml` is a development container, not a web
+server: it holds the repository open for `exec` and publishes no ports. The
+embedded OpenCode SDK server in `src/opencode.ts` is transport to Ollama, not a
+target. Anbu exposes no web UI or public API; all interaction is through the
+CLI.
+
+Targets are declared in scope files (`host`, `scheme`, `port`, `paths`,
+`methods`). For example, `scope/juice-shop.local.json` points at
+`localhost:3000`. The scope grants permission and bounds the run; it does not
+provide the application. To exercise the engine, start a vulnerable
+application you own (Juice Shop, WebGoat, DVWA, crAPI) and point a scope at it;
+see [`verification.md`](verification.md) and
+[`ci-ollama-smoke.md`](ci-ollama-smoke.md).
+
+The test fixtures are deterministic and intentionally vulnerable (reflected XSS,
+SQL error disclosure, permissive CORS, an unauthenticated admin page, and a
+readable audit log) so check baselines stay reproducible. They never listen on
+a public interface and are not part of the product.

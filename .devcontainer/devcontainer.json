@@ -7,11 +7,13 @@
   "remoteUser": "node",
   "containerEnv": {
     "OLLAMA_BASE_URL": "http://ollama:11434/v1",
-    "OLLAMA_MODEL": "granite3.3:2b"
+    "OLLAMA_MODEL": "granite3.3:2b",
+    "ANBU_SCOPE_FILE": "scope/testfire.json"
   },
   "remoteEnv": {
     "OLLAMA_BASE_URL": "http://ollama:11434/v1",
-    "OLLAMA_MODEL": "granite3.3:2b"
+    "OLLAMA_MODEL": "granite3.3:2b",
+    "ANBU_SCOPE_FILE": "scope/testfire.json"
   },
   "postCreateCommand": "bash scripts/devcontainer-setup.sh",
   "updateContentCommand": "npm install",

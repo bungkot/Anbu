@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "Altoro Mutual (demo.testfire.net) authorized external target",
+  "authorization": {
+    "reference": "ALTORO-2026-001",
+    "owner": "Altoro Mutual asset owner",
+    "issuedBy": "CISO Office",
+    "validFrom": "2026-01-01T00:00:00Z",
+    "validUntil": "2035-01-01T00:00:00Z",
+    "token": "env:ANBU_AUTH_TOKEN"
+  },
+  "targets": [
+    {
+      "host": "demo.testfire.net",
+      "scheme": "https",
+      "port": 443,
+      "paths": ["/"],
+      "methods": ["GET", "HEAD", "OPTIONS"]
+    }
+  ],
+  "deny": [],
+  "testClasses": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
+  "readOnly": true,
+  "policy": {
+    "maxRequests": 500,
+    "requestsPerSecondPerHost": 5,
+    "followExternalRedirects": false
+  }
+}

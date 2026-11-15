@@ -46,6 +46,28 @@ test("parseScope rejects a deny entry without host or cidr", () => {
   assert.equal(result.ok, false);
 });
 
+test("parseScope accepts a non-negative rateLimitWaitMs policy", () => {
+  const zero = parseScope({ ...makeScope(), policy: { rateLimitWaitMs: 0 } });
+  assert.equal(zero.ok, true);
+  if (zero.ok) assert.equal(zero.value.policy?.rateLimitWaitMs, 0);
+
+  const paced = parseScope({ ...makeScope(), policy: { rateLimitWaitMs: 1500 } });
+  assert.equal(paced.ok, true);
+  if (paced.ok) assert.equal(paced.value.policy?.rateLimitWaitMs, 1500);
+});
+
+test("parseScope rejects a negative rateLimitWaitMs policy", () => {
+  const result = parseScope({ ...makeScope(), policy: { rateLimitWaitMs: -1 } });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.errors.join("\n"), /rateLimitWaitMs/);
+});
+
+test("parseScope rejects a non-integer rateLimitWaitMs policy", () => {
+  const result = parseScope({ ...makeScope(), policy: { rateLimitWaitMs: 1.5 } });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.errors.join("\n"), /rateLimitWaitMs/);
+});
+
 test("evaluateScope allows an in-scope GET", () => {
   const decision = evaluateScope(makeScope(), request("GET", "https://example.test/app"));
   assert.equal(decision.allowed, true);

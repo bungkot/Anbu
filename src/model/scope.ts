@@ -86,6 +86,11 @@ export interface ScopePolicy {
   maxDurationMinutes?: number;
   maxConcurrentPerHost?: number;
   requestsPerSecondPerHost?: number;
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before denying
+   * a request. Zero disables pacing and restores deny-immediately behaviour.
+   */
+  rateLimitWaitMs?: number;
   maxBodyBytes?: number;
   maxRedirects?: number;
   followExternalRedirects?: boolean;
@@ -268,6 +273,21 @@ function readPositiveInt(
   if (value === undefined) return undefined;
   if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
     errors.push(`${label} must be a positive integer`);
+    return undefined;
+  }
+  return value;
+}
+
+function readNonNegativeInt(
+  obj: Record<string, unknown>,
+  key: string,
+  errors: string[],
+  label: string = key,
+): number | undefined {
+  const value = obj[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    errors.push(`${label} must be a non-negative integer`);
     return undefined;
   }
   return value;
@@ -590,6 +610,15 @@ function parsePolicy(input: unknown, errors: string[]): ScopePolicy | undefined 
   );
   if (requestsPerSecondPerHost !== undefined) {
     policy.requestsPerSecondPerHost = requestsPerSecondPerHost;
+  }
+  const rateLimitWaitMs = readNonNegativeInt(
+    input,
+    "rateLimitWaitMs",
+    errors,
+    "policy.rateLimitWaitMs",
+  );
+  if (rateLimitWaitMs !== undefined) {
+    policy.rateLimitWaitMs = rateLimitWaitMs;
   }
   const maxBodyBytes = readPositiveInt(input, "maxBodyBytes", errors, "policy.maxBodyBytes");
   if (maxBodyBytes !== undefined) policy.maxBodyBytes = maxBodyBytes;

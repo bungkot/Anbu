@@ -114,6 +114,58 @@ test("the global request budget is enforced before the second request", async ()
   }
 });
 
+test("a per-host rate limit paces the next request instead of denying it", async () => {
+  const fixture = await startFixture();
+  try {
+    // A fixed clock keeps the pacing amount deterministic: the third request
+    // needs one full refill of a 2 req/s bucket, i.e. 500ms.
+    const { client, audit } = await makeHarness(localScope(fixture.port), {
+      requestsPerSecondPerHost: 2,
+      rateLimitWaitMs: 1000,
+      now: () => new Date("2026-01-01T00:00:00Z"),
+    });
+    // The burst capacity is two tokens; the third request must wait for a refill.
+    assert.equal((await client.request({ method: "GET", url: `${fixture.baseUrl}/` })).ok, true);
+    assert.equal((await client.request({ method: "GET", url: `${fixture.baseUrl}/` })).ok, true);
+    const paced = await client.request({ method: "GET", url: `${fixture.baseUrl}/` });
+    assert.equal(paced.ok, true);
+    assert.equal(fixture.requests.length, 3);
+
+    const entries = audit.list();
+    assert.equal(entries.length, 3);
+    assert.equal(entries[0].waitedMs, 0);
+    assert.equal(entries[1].waitedMs, 0);
+    assert.equal(entries[2].waitedMs, 500);
+  } finally {
+    await fixture.close();
+  }
+});
+
+test("without a wait limit a per-host rate limit still denies immediately", async () => {
+  const fixture = await startFixture();
+  try {
+    const { client, audit } = await makeHarness(localScope(fixture.port), {
+      requestsPerSecondPerHost: 2,
+    });
+    assert.equal((await client.request({ method: "GET", url: `${fixture.baseUrl}/` })).ok, true);
+    assert.equal((await client.request({ method: "GET", url: `${fixture.baseUrl}/` })).ok, true);
+    const denied = await client.request({ method: "GET", url: `${fixture.baseUrl}/` });
+    assert.equal(denied.ok, false);
+    assert.match(denied.error ?? "", /per-host/);
+    assert.equal(fixture.requests.length, 2);
+
+    // Without pacing configured the limiter never waits, so the audit entries
+    // carry no waitedMs field at all.
+    const entries = audit.list();
+    assert.equal(entries.length, 3);
+    for (const entry of entries) {
+      assert.equal(entry.waitedMs, undefined);
+    }
+  } finally {
+    await fixture.close();
+  }
+});
+
 test("captured evidence and audit logs never contain the leaked credential", async () => {
   const fixture = await startFixture();
   try {

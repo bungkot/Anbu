@@ -29,6 +29,8 @@ export interface AuditDetails {
   stopReason?: string;
   /** How state-changing approvals were resolved for the run. */
   approvalMode?: ApprovalMode;
+  /** Milliseconds a guardrail spent waiting for a per-host rate-limit token. */
+  waitedMs?: number;
 }
 
 export interface AuditEntry {
@@ -42,6 +44,7 @@ export interface AuditEntry {
   target?: string;
   evidenceId?: string;
   approvalMode?: ApprovalMode;
+  waitedMs?: number;
   prevHash: string;
   hash: string;
 }

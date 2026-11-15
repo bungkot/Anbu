@@ -33,6 +33,7 @@
     "maxDurationMinutes": 60,
     "maxConcurrentPerHost": 2,
     "requestsPerSecondPerHost": 5,
+    "rateLimitWaitMs": 1000,
     "maxBodyBytes": 65536,
     "maxRedirects": 3,
     "followExternalRedirects": false

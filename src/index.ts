@@ -206,6 +206,7 @@ async function reconCommand(args: string[]): Promise<void> {
     maxUrls: parsed.maxUrls,
     rateLimiter,
     audit,
+    rateLimitWaitMs: scope.policy?.rateLimitWaitMs ?? config.rateLimitWaitMs,
   });
 
   if (!recon.ok || recon.summary === undefined) {

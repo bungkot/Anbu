@@ -155,7 +155,9 @@ export function localScope(port: number, overrides: Partial<Scope> = {}): Scope 
 export interface HarnessOptions {
   requestsPerSecondPerHost?: number;
   maxRequests?: number;
+  rateLimitWaitMs?: number;
   env?: (name: string) => string | undefined;
+  now?: () => Date;
 }
 
 /** Build a real guarded client over temp audit storage and a fixed token. */
@@ -174,6 +176,8 @@ export async function makeHarness(
     rateLimiter,
     audit,
     env: options.env ?? (() => "test-token"),
+    now: options.now,
+    rateLimitWaitMs: options.rateLimitWaitMs,
   });
   return { dir, audit, client };
 }

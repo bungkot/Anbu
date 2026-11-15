@@ -76,6 +76,9 @@ the LLM context.
 **Threat**: aggressive testing takes down the target or the host.
 **Mitigations**
 - Per-host and global rate limits.
+- Per-host throttling paces requests (waits for a token) up to a configurable
+  bound instead of dropping them; the wait is capped so a slow refill cannot
+  stall a run, and the global budget is a hard cap that is never waited out.
 - A per-request timeout and bounded request budgets.
 - Request, duration, and body-size budgets.
 - Destructive and load-generating tests denied by default.

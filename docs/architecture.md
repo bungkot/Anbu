@@ -132,8 +132,9 @@ src/
   `METHOD /path` allowlist.
 - `policy`: `maxRequests`, `maxDurationMinutes`, `maxConcurrentPerHost`
   (accepted but not enforced; requests are sequential),
-  `requestsPerSecondPerHost`, `maxBodyBytes`, `maxRedirects`,
-  `followExternalRedirects`, `maxModelTurns`, `maxFindingsPerCategory`.
+  `requestsPerSecondPerHost`, `rateLimitWaitMs` (per-host pacing bound),
+  `maxBodyBytes`, `maxRedirects`, `followExternalRedirects`, `maxModelTurns`,
+  `maxFindingsPerCategory`.
 - `testClasses[]`: OWASP categories in scope; defaults to all ten when omitted.
 
 ### Finding
@@ -183,7 +184,9 @@ Every outbound request passes through:
 2. **Deny check** — explicit deny entries win over allow entries.
 3. **Authorization check** — the authorization document is valid and unexpired.
 4. **Policy check** — body size, state-changing rules, and redirect behavior.
-5. **Rate limit** — per-host token bucket plus a global request budget.
+5. **Rate limit** — per-host token bucket plus a global request budget. When
+   pacing is enabled the guardrail waits for a token (bounded by
+   `rateLimitWaitMs`) and records the wait in the audit entry as `waitedMs`.
 
 A violation is recorded in the audit log and the request is dropped. The loop
 can be configured to halt on repeated violations.

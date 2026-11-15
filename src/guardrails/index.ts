@@ -28,6 +28,11 @@ export interface GuardContext {
   audit: AuditLog;
   now?: Date;
   env?: (name: string) => string | undefined;
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before the
+   * request is denied. When omitted, the limiter denies immediately.
+   */
+  rateLimitWaitMs?: number;
 }
 
 /** Audit targets never include query strings or fragments. */
@@ -86,17 +91,22 @@ export async function evaluateGuard(
   });
   if (!policyDecision.allowed) return finish("deny");
 
-  const rateDecision = ctx.rateLimiter.tryAcquire(hostOf(request.url), now.getTime());
+  const rateDecision =
+    ctx.rateLimitWaitMs === undefined
+      ? ctx.rateLimiter.tryAcquire(hostOf(request.url), now.getTime())
+      : await ctx.rateLimiter.acquire(hostOf(request.url), now.getTime(), {
+          maxWaitMs: ctx.rateLimitWaitMs,
+        });
   checks.push({
     name: "rate-limit",
     allowed: rateDecision.allowed,
     reason: rateDecision.reason,
   });
-  if (!rateDecision.allowed) return finish("deny");
+  if (!rateDecision.allowed) return finish("deny", rateDecision.waitedMs);
 
-  return finish("allow");
+  return finish("allow", rateDecision.waitedMs);
 
-  async function finish(decision: "allow" | "deny"): Promise<GuardResult> {
+  async function finish(decision: "allow" | "deny", waitedMs?: number): Promise<GuardResult> {
     const failed = checks.find((check) => !check.allowed);
     const result: GuardResult = {
       allowed: decision === "allow",
@@ -110,6 +120,7 @@ export async function evaluateGuard(
       reason: result.reason,
       method: request.method.toUpperCase(),
       target: sanitizeTarget(request.url),
+      waitedMs,
     });
     return result;
   }

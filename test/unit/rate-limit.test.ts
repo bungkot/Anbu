@@ -29,3 +29,68 @@ test("tokens refill over time", () => {
   assert.equal(limiter.tryAcquire("a.test", 0).allowed, false);
   assert.equal(limiter.tryAcquire("a.test", 1000).allowed, true);
 });
+
+test("acquire waits for a per-host token instead of denying", async () => {
+  const limiter = new RateLimiter({ requestsPerSecondPerHost: 2, maxRequests: 100 });
+  assert.equal(limiter.tryAcquire("a.test", 0).allowed, true);
+  assert.equal(limiter.tryAcquire("a.test", 0).allowed, true);
+
+  const sleeps: number[] = [];
+  const decision = await limiter.acquire("a.test", 0, {
+    maxWaitMs: 1000,
+    sleep: async (ms) => {
+      sleeps.push(ms);
+    },
+  });
+  assert.equal(decision.allowed, true);
+  assert.deepEqual(sleeps, [500]);
+});
+
+test("acquire denies when waiting would exceed the configured limit", async () => {
+  const limiter = new RateLimiter({ requestsPerSecondPerHost: 2, maxRequests: 100 });
+  limiter.tryAcquire("a.test", 0);
+  limiter.tryAcquire("a.test", 0);
+
+  let slept = false;
+  const decision = await limiter.acquire("a.test", 0, {
+    maxWaitMs: 499,
+    sleep: async () => {
+      slept = true;
+    },
+  });
+  assert.equal(decision.allowed, false);
+  if (!decision.allowed) assert.match(decision.reason ?? "", /per-host/);
+  assert.equal(slept, false);
+});
+
+test("acquire with a zero wait limit denies immediately", async () => {
+  const limiter = new RateLimiter({ requestsPerSecondPerHost: 2, maxRequests: 100 });
+  limiter.tryAcquire("a.test", 0);
+  limiter.tryAcquire("a.test", 0);
+
+  let slept = false;
+  const decision = await limiter.acquire("a.test", 0, {
+    maxWaitMs: 0,
+    sleep: async () => {
+      slept = true;
+    },
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(slept, false);
+});
+
+test("acquire never waits out the global budget", async () => {
+  const limiter = new RateLimiter({ requestsPerSecondPerHost: 100, maxRequests: 1 });
+  limiter.tryAcquire("a.test", 0);
+
+  let slept = false;
+  const decision = await limiter.acquire("b.test", 0, {
+    maxWaitMs: 1000,
+    sleep: async () => {
+      slept = true;
+    },
+  });
+  assert.equal(decision.allowed, false);
+  if (!decision.allowed) assert.match(decision.reason ?? "", /global/);
+  assert.equal(slept, false);
+});

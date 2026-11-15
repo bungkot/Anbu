@@ -56,6 +56,12 @@ export interface PentestOptions {
   toolFailureStreakLimit?: number;
   /** Backoff after a rate-limit denial. Default 250ms; set 0 to disable. */
   throttleDelayMs?: number;
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before denying
+   * a request. Overrides the scope policy and configuration. When omitted, the
+   * scope policy or configured default is used.
+   */
+  rateLimitWaitMs?: number;
   approval?: ApprovalProvider;
   /** Records how state-changing approvals are resolved in the audit log. */
   approvalMode?: ApprovalMode;
@@ -443,6 +449,8 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
       scope.policy?.requestsPerSecondPerHost ?? config.requestsPerSecondPerHost,
     maxRequests: limits.maxRequests,
   });
+  const rateLimitWaitMs =
+    options.rateLimitWaitMs ?? scope.policy?.rateLimitWaitMs ?? config.rateLimitWaitMs;
   const client = new GuardedHttpClient({
     scope,
     rateLimiter,
@@ -451,6 +459,7 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
     env,
     fetchFn: options.fetchFn,
     maxResponseBodyBytes: limits.maxBodyBytes,
+    rateLimitWaitMs,
   });
 
   let transport = options.transport;
@@ -480,6 +489,7 @@ export async function runPentest(options: PentestOptions): Promise<PentestRunRes
     maxDepth,
     maxUrls,
     maxResponseBodyBytes: limits.maxBodyBytes,
+    rateLimitWaitMs,
   });
   const attackSurface = recon.summary ?? minimalAttackSurface(scope, maxDepth, maxUrls);
   if (recon.summary === undefined) {

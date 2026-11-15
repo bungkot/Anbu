@@ -21,6 +21,11 @@ export const config = {
   maxBodyBytes: Number(process.env.ANBU_MAX_BODY_BYTES ?? 65_536),
   maxRedirects: Number(process.env.ANBU_MAX_REDIRECTS ?? 3),
   requestsPerSecondPerHost: Number(process.env.ANBU_REQUESTS_PER_SECOND_PER_HOST ?? 5),
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before the
+   * request is denied. Zero restores deny-immediately behaviour.
+   */
+  rateLimitWaitMs: Number(process.env.ANBU_RATE_LIMIT_WAIT_MS ?? 1000),
   /** Read-only by default. State-changing tests require explicit approval. */
   readOnly: (process.env.ANBU_READ_ONLY ?? "true") === "true",
 } as const;

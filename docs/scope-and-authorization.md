@@ -55,6 +55,7 @@ tested and how.
     "maxDurationMinutes": 60,
     "maxConcurrentPerHost": 2,
     "requestsPerSecondPerHost": 5,
+    "rateLimitWaitMs": 1000,
     "maxBodyBytes": 65536,
     "maxRedirects": 3,
     "followExternalRedirects": false
@@ -74,6 +75,9 @@ tested and how.
   fields.
 - `stateChanging.mode` is `deny` (default), `approve` (human gate), or `allow`
   (only for explicitly listed endpoints).
+- `policy.rateLimitWaitMs` bounds how long a request waits for a per-host token.
+  Zero disables pacing and restores deny-immediately behaviour. The environment
+  default is `ANBU_RATE_LIMIT_WAIT_MS`.
 
 ## 3. Authorization validation
 
@@ -136,6 +140,8 @@ The audit log records, at minimum:
 
 - Run ID, scope reference, and operator.
 - Every guardrail decision (allow/deny) with reason.
+- Milliseconds spent pacing for a per-host rate-limit token (`waitedMs`), when
+  pacing is enabled.
 - Every state-changing request and its approval.
 - Budget consumption and stop reason.
 

@@ -5,7 +5,7 @@
 | `Refusing to start: authorization` | Scope missing, expired, or token unresolved | Check `scope/example.json` (or your scope file), validity window, and `ANBU_AUTH_TOKEN`. |
 | `Refusing to start: no targets` | Empty `targets` array or all denied | Add an allowed target and path. |
 | `Request blocked: out of scope` | Host/path/port/method not in `targets`, or matched `deny` | Fix the URL or update the scope; deny always wins. |
-| `Request blocked: rate limit` | Too many requests to one host | Lower `requestsPerSecondPerHost` or raise the budget. |
+| `Request blocked: rate limit` | Per-host pacing waited out (`ANBU_RATE_LIMIT_WAIT_MS`) or the global budget is exhausted | Raise `ANBU_RATE_LIMIT_WAIT_MS`, lower `ANBU_REQUESTS_PER_SECOND_PER_HOST`, or raise the request budget. |
 | `Ollama is not responding` | Stack not running or wrong base URL | `docker compose up -d`; run `npm run doctor`. |
 | `Model is not available` | Model not pulled | `docker compose exec ollama ollama pull <model>`. |
 | LLM returns invalid JSON | Model too small or prompt too long | Use a larger model, shorten context, or rely on deterministic checks. |

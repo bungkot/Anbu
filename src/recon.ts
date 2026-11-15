@@ -24,6 +24,11 @@ export interface ReconOptions {
   fetchFn?: typeof fetch;
   env?: (name: string) => string | undefined;
   maxResponseBodyBytes?: number;
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before denying
+   * a request. When omitted, the limiter denies immediately.
+   */
+  rateLimitWaitMs?: number;
 }
 
 export interface AttackSurfaceSummary {
@@ -98,6 +103,7 @@ export async function runRecon(options: ReconOptions): Promise<ReconResult> {
     fetchFn: options.fetchFn,
     env: options.env,
     maxResponseBodyBytes: options.maxResponseBodyBytes,
+    rateLimitWaitMs: options.rateLimitWaitMs,
   });
   const crawler = new Crawler({ client, scope: options.scope });
 

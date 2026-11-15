@@ -75,6 +75,11 @@ export interface GuardedHttpClientOptions {
   fetchFn?: typeof fetch;
   timeoutMs?: number;
   maxResponseBodyBytes?: number;
+  /**
+   * Maximum milliseconds to wait for a per-host rate-limit token before denying
+   * the request. When omitted, the limiter denies immediately.
+   */
+  rateLimitWaitMs?: number;
 }
 
 function normalizeHeaders(headers?: Record<string, string>): Record<string, string> {
@@ -155,6 +160,7 @@ export class GuardedHttpClient {
   private readonly fetchFn: typeof fetch;
   private readonly timeoutMs: number;
   private readonly maxResponseBodyBytes: number;
+  private readonly rateLimitWaitMs: number | undefined;
 
   constructor(options: GuardedHttpClientOptions) {
     this.scope = options.scope;
@@ -165,6 +171,7 @@ export class GuardedHttpClient {
     this.fetchFn = options.fetchFn ?? fetch;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxResponseBodyBytes = options.maxResponseBodyBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+    this.rateLimitWaitMs = options.rateLimitWaitMs;
   }
 
   async request(input: HttpRequestInput): Promise<HttpRequestOutcome> {
@@ -189,6 +196,7 @@ export class GuardedHttpClient {
           audit: this.audit,
           now: this.now(),
           env: this.env,
+          rateLimitWaitMs: this.rateLimitWaitMs,
         },
         { method, url, body },
       );
